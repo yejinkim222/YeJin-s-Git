@@ -1,0 +1,31 @@
+# 시스템 관련 폴더/파일 무시
+AppData/
+.vscode/
+*.log
+*.tmp
+__pycache__/
+*.pyc
+*.pyo
+*.class
+
+# 주피터 노트북 체크포인트 무시
+.ipynb_checkpoints/
+
+# IDE/환경 설정 무시
+.idea/
+*.iml
+
+# 데이터 파일 (선택)
+*.csv
+*.xlsx
+*.xls
+*.sav
+
+# 실행 파일 등 무시
+*.exe
+*.dll
+*.bin
+
+# OS별 무시
+.DS_Store
+Thumbs.db
