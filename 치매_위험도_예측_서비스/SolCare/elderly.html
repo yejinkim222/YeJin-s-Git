@@ -1,0 +1,81 @@
+
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SolCare - 독거노인 예측</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header>
+    <div class="logo"><a href="index.html">SolCare</a></div>
+    <nav>
+      <ul>
+        <li><a href="disease.html">질병 정보</a></li>
+        <li>
+          <a href="#">치매 예측 서비스</a>
+          <ul class="dropdown">
+            <li><a href="mci.html">MCI 예측</a></li>
+            <li><a href="elderly.html">독거노인 예측</a></li>
+          </ul>
+        </li>
+        <li><a href="map.html">치매 센터 안내</a></li>
+        <li><a href="#">로그인/회원가입</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <section class="predict-section">
+    <h2>독거노인 치매 예측 입력</h2>
+    <form id="elderlyPredictForm">
+      <label for="age2">나이</label>
+      <input type="number" id="age2" name="age2" required />
+
+      <label for="alone-years">독거 기간 (년)</label>
+      <input type="number" id="alone-years" name="alone-years" required />
+
+      <label>사회적 교류</label>
+      <div class="radio-group">
+        <label><input type="radio" name="social" value="high" /> 많음</label>
+        <label><input type="radio" name="social" value="low" /> 적음</label>
+      </div>
+
+      <label>경제적 여건</label>
+      <div class="radio-group">
+        <label><input type="radio" name="income" value="good" /> 좋음</label>
+        <label><input type="radio" name="income" value="notbad" /> 양호</label>
+        <label><input type="radio" name="income" value="bad" /> 나쁨</label>
+      </div>
+
+      <label for="period2">예측 기간 (년)</label>
+      <input type="number" id="period2" name="period2" required />
+
+      <button type="submit" class="btn">예측 시작하기</button>
+    </form>
+    <a href="elderly_map.html" class="back-btn" style="display: block; text-align: center; margin-top: 30px;">◀ 돌아가기</a>
+  </section>
+
+  <!-- <script src="js/elderly_map.js" defer></script> -->
+  <script>
+    document.getElementById('elderlyPredictForm')?.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const age = document.getElementById('age2').value;
+      const aloneYears = document.getElementById('alone-years').value;
+      const social = document.querySelector('input[name="social"]:checked')?.value;
+      const income = document.querySelector('input[name="income"]:checked')?.value;
+      const period = document.getElementById('period2').value;
+
+      if (!age || !aloneYears || !social || !income || !period) {
+        alert("모든 항목을 입력해주세요!");
+        return;
+      }
+
+      localStorage.setItem('elderly_input', JSON.stringify({ age, aloneYears, social, income, period }));
+      location.href = "elderly_map.html";
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SolCare  치매센터안내</title>
+  
+
+  <!-- 스타일 연결 끌어옴 -->
+  <link rel="stylesheet" href="css/style.css">
+
+  <!-- 카카오맵 SDK (지도 + 장소검색 라이브러리 포함) -->
+  <script type="text/javascript"
+          src="//dapi.kakao.com/v2/maps/sdk.js?appkey=322e8399c85f7a81cc30e866b494adf0&libraries=services"></script>
+
+  <!-- 데이터 먼저 09에선 센터링크로 링크없이 저장했음 로드하기 /끌어옴-->
+  <script src="data/centerData_with_link.js"></script>
+</head>
+
+
+<body>
+  <!-- 상단의 네비게이션 모든 슬라이드 공통 /각슬라이드에서 class="active"만 앞에 붙이기 -->
+   <header class ="nav">
+    <div class="logo"><a href="index.html">SolCare</a></div>
+    <nav>
+      <ul>
+        <li><a href="disease.html">질병 정보</a></li>
+        <li>
+          <a href="#">치매 예측 서비스</a>
+          <ul class="dropdown">
+            <li><a href="mci.html">MCI 예측</a></li>
+            <li><a href="elderly.html">독거노인 예측</a></li>
+          </ul>
+        </li>
+        <li><a href="map.html">치매 센터 안내</a></li>
+        <li><a href="#">로그인/회원가입</a></li>
+      </ul>
+    </nav>
+   </header>
+
+
+   <!-- 맵페이지 0716붙인거 -->
+  <!-- <section id="mapPage" class="hidden"></section> -->
+   <!-- 메인 레이아웃 -->
+    <div class ="container">
+      <!-- 좌측에 서울시 구선택하기 -->
+       <aside class ="sidebar">
+        <h3>지역선택</h3>
+        <ul id ="regionList"></ul>
+       </aside>
+
+       <!-- 우측에 지도영역 -->
+        <div class ="map-container">
+          <!-- 상담에 카터고리선택 버튼 -->
+           <div class ="category-buttons">
+            <button onclick ="changeCategory('복지')">복지센터</button>
+            <button onclick ="changeCategory('치매')">치매센터</button>
+           </div>
+
+           <!-- 지도를 출력하기 -->  
+            <div id ="map"></div>
+        </div>
+    </div>
+
+    <!-- 데이터 먼저 09에선 센터링크로 링크없이 저장했음 로드하기 /끌어옴-->
+     <!-- <script src="data/centerData_with_link.js"></script> -->
+
+     <!-- 지도동작 스크립트입니당 /끌어옴  defer-->
+      <!-- 공동예측폼 사이드바 + 맵 -->
+      <script src="js/map.js" defer></script>
+      <!-- <script src ="js/script.js" defer></script> -->
+      
+</body>
+</html>

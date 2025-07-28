@@ -1,0 +1,172 @@
+/* === 공통 초기화 === */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+body {
+  background-color: #f1f8e9;
+  color: #004d40;
+  font-family: 'Noto Sans KR', sans-serif;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+.hidden {
+  display: none !important;
+}
+
+/* === 헤더 및 네비게이션 === */
+header {
+  width: 100%;
+  height: 60px;
+  background: #014c40;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 30px;
+}
+.logo a {
+  font-weight: bold;
+  font-size: 32px;
+  line-height: 60px;
+  color: #ffffff;
+  cursor: pointer;
+}
+nav {
+  display: flex;
+  justify-content: flex-end;
+}
+nav ul {
+  display: flex;
+  list-style: none;
+  gap: 60px;
+  padding-left: 0;
+}
+nav ul li a {
+  text-decoration: none;
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 16px;
+  white-space: nowrap;
+  padding: 0 5px;
+}
+nav ul li a:hover {
+  color: #ffe082;
+}
+nav ul li ul {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 99;
+  background: #ffffff;
+  border: 1px solid #ddd;
+  padding: 10px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  opacity: 0;
+  pointer-events: none;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 200px;
+}
+nav ul li:hover ul {
+  display: flex;
+  opacity: 1;
+  pointer-events: auto;
+}
+nav ul li ul li a {
+  color: #555;
+  font-weight: normal;
+  padding: 8px 10px;
+  display: block;
+  text-align: center;
+}
+nav ul li ul li a:hover {
+  background-color: #f0f0f0;
+  color: #00796b;
+  border-radius: 8px;
+}
+
+/* === 예측 입력 폼 영역 === */
+.predict-section {
+  padding: 40px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+.predict-section h2 {
+  color: #1976d2;
+  margin-bottom: 25px;
+}
+
+/* === form 전체 구조 (그리드) === */
+form {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 15px 20px;
+  align-items: center;
+  background: #fff;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+form label {
+  text-align: right;
+  font-weight: bold;
+}
+.form-row {
+  display: contents;
+}
+input[type="number"],
+select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+/* === 라디오 그룹 === */
+.radio-group {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  grid-column: 2 / 3;
+}
+.radio-group label {
+  font-weight: normal;
+  text-align: left;
+}
+
+/* === 버튼 === */
+.btn {
+  grid-column: span 2;
+  padding: 12px;
+  background-color: #26a69a;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: background-color 0.3s ease;
+}
+.btn:hover {
+  background-color: #1b8e84;
+}
+
+/* === 돌아가기 버튼 === */
+.back-btn {
+  display: block;
+  text-align: center;
+  margin-top: 30px;
+  text-decoration: none;
+  font-size: 16px;
+  color: #6a1b9a;
+  font-weight: bold;
+}
+.back-btn:hover {
+  color: #4a148c;
+}

@@ -1,0 +1,193 @@
+/* ===== 공통 초기화 및 전역 설정 ===== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+body {
+  font-family: 'Spoqa Han Sans', 'Noto Sans KR', sans-serif;
+  background-color: #f5f7fa;
+  color: #333;
+  margin: 0;
+  padding: 0;
+}
+.hidden {
+  display: none;
+}
+
+/* ===== 헤더 및 네비게이션 ===== */
+header {
+  width: 100%;
+  position: relative;
+  z-index: 9999;
+  height: 60px;
+  background: #014c40;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 30px;
+}
+.logo a {
+  font-weight: bold;
+  font-size: 32px;
+  line-height: 60px;
+  color: #ffffff;
+  text-decoration: none;
+}
+nav {
+  display: flex;
+  justify-content: flex-end;
+}
+nav ul {
+  display: flex;
+  list-style: none;
+  gap: 60px;
+  padding-left: 0;
+}
+nav ul li {
+  position: relative;
+  z-index: 10;
+}
+nav ul li a {
+  text-decoration: none;
+  color: #ffffff;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 16px;
+  white-space: nowrap;
+  padding: 0 5px;
+}
+nav ul li a:hover {
+  color: #ffe082;
+}
+nav ul li ul {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 99;
+  background: #ffffff;
+  border: 1px solid #ddd;
+  padding: 10px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  opacity: 0;
+  pointer-events: none;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 200px;
+}
+nav ul li:hover ul {
+  display: flex;
+  opacity: 1;
+  pointer-events: auto;
+}
+nav ul li ul li a {
+  color: #555;
+  font-weight: normal;
+  padding: 8px 10px;
+  line-height: 1;
+  display: block;
+  text-align: center;
+}
+nav ul li ul li a:hover {
+  background-color: #f0f0f0;
+  color: #00796b;
+  border-radius: 8px;
+}
+
+/* result.css */
+
+/* 전체 페이지 배경과 글꼴 설정 */
+body {
+    font-family: 'Spoqa Han Sans', sans-serif;
+    background-color: #f5f7fa;
+    margin: 0;
+    padding: 0;
+    color: #333;
+}
+
+/* 예측 결과 전체 박스 */
+.container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 30px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* 상단 제목 */
+.title {
+    text-align: center;
+    margin-bottom: 24px;
+    color: #222;
+}
+
+/* 그래프와 축이 들어가는 영역 */
+.graph-box {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+/* 그래프 아래 범례(색상 구분 설명) */
+.legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    font-size: 0.9rem;
+    margin-top: 8px;
+}
+
+/* 범례용 색상 점 */
+.marker {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+
+/* 예측 발병 시점을 나타내는 색상 */
+.model-center {
+    background-color: #007bff;
+}
+
+/* 사용자가 입력한 기준 시점을 나타내는 색상 */
+.user-input {
+    background-color: #f1c40f;
+}
+
+/* 예측 결과 해석 문구 상자 (빠르거나 늦은 경우 설명) */
+.analysis-box {
+    padding: 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* 예측 기준 시점이 늦은 경우 색상 */
+.analysis-box.late {
+    background-color: #fff0f0;
+    color: #9c0808;
+}
+
+/* 예측 기준 시점이 빠른 경우 색상 */
+.analysis-box.early {
+    background-color: #e6f4ea;
+    color: #1e4620;
+}
+
+/* 하단의 안내 문구 상자 */
+.notice-box {
+    background-color: #e9ecef; /* 연한 회색 */
+    color: #495057;            /* 어두운 회색 텍스트 */
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    text-align: center;
+    margin-top: 16px;
+}

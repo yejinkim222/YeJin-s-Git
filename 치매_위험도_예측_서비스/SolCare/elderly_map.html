@@ -1,0 +1,54 @@
+
+<!-- elderly_map.html -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>SolCare - 독거노인 치매 예측 결과</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=322e8399c85f7a81cc30e866b494adf0"></script>
+</head>
+<body>
+  <header>
+    <div class="logo"><a href="index.html">SolCare</a></div>
+    <nav>
+      <ul>
+        <li><a href="disease.html">질병 정보</a></li>
+        <li>
+          <a href="#">치매 예측 서비스</a>
+          <ul class="dropdown">
+            <li><a href="mci.html">MCI 예측</a></li>
+            <li><a href="elderly.html">독거노인 예측</a></li>
+          </ul>
+        </li>
+        <li><a href="map.html">치매 센터 안내</a></li>
+        <li><a href="#">로그인/회원가입</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <aside class="sidebar">
+    <h3>지역 선택</h3>
+    <ul id="districtList">
+      <li>강남구</li>
+      <li>강서구</li>
+      <li>금천구</li>
+      <li>노원구</li>
+      <li>서초구</li>
+      <li>영등포구</li>
+    </ul>
+  </aside>
+
+  <section class="main-content" id="mapSection">
+    <div id="map"></div>
+    <div class="result-text" id="infoBox">※ 지역을 클릭하면 치매 예측 정보가 나타납니다.</div>
+    <div class="address-box" id="addressBox"></div>
+    <div class="button-group">
+      <button class="btn-detail" onclick="alert('자세한 분석 페이지로 이동 예정')">자세히 알아보기</button>
+      <button class="btn-center" onclick="location.href='center.html'">치매 센터 안내</button>
+    </div>
+  </section>
+  <script src="js/elderly_map.js" defer></script>
+</body>
+</html>
+

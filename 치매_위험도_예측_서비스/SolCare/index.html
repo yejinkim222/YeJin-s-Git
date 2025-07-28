@@ -1,0 +1,148 @@
+<!-- 메인 -->
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SolCare - 메인</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header>
+    <div class="logo"><a href="index.html">SolCare</a></div>
+    <nav>
+      <ul>
+        <li><a href="disease.html">질병 정보</a></li>
+        <li>
+          <a href="#">치매 예측 서비스</a>
+          <ul class="dropdown">
+            <li><a href="mci.html">MCI 예측</a></li>
+            <li><a href="elderly.html">독거노인 예측</a></li>
+          </ul>
+        </li>
+        <li><a href="map.html">치매 센터 안내</a></li>
+        <li><a href="#">로그인/회원가입</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- <section class="main-page">
+    <img src="images/image_main01.png" alt="따뜻한 손" class="hero-bg" /> -->
+    <section class="main-page slider">
+    <!-- 슬라이드 이미지들 -->
+    <div class="slide active">
+      <img src="images/image_main01.png" alt="슬라이드1" class="hero-bg" />
+    </div>
+    <div class="slide">
+      <img src="images/image_main02.png" alt="슬라이드2" class="hero-bg" />
+    </div>
+    <div class="slide">
+      <img src="images/image_main03.png" alt="슬라이드3" class="hero-bg" />
+    </div>
+
+  <!-- 좌우 화살표 버튼 -->
+    <div class="arrow left" onclick="prevSlide()">❮</div>
+    <div class="arrow right" onclick="nextSlide()">❯</div>
+
+    <div class="hero-textbox">
+      <h1>SolCare는 당신의 건강을 함께 고민합니다</h1>
+      <p>당신의 삶에 따뜻한 케어를 더합니다</p>
+    </div>
+
+    <!-- 하단 점 네비게이션 -->
+    <div class="dots">
+      <span class="dot active" onclick="goToSlide(0)"></span>
+      <span class="dot" onclick="goToSlide(1)"></span>
+      <span class="dot" onclick="goToSlide(2)"></span>
+    </div>
+
+    <footer>
+      <div class="footer-content">
+        <a href="disease.html" class="footer-btn">Explore Symptoms</a>
+      </div>
+    </footer>
+  </section>
+
+  <!-- 뉴스 슬라이드 영역 시작 -->
+  <section id="news-slider">
+    <h2>치매 예방과 독거노인 돌봄 뉴스</h2>
+    <div class="slider-wrapper">
+      <button class="prev">&lt;</button>
+      <div class="slider-track">
+        <!-- 각 뉴스 -->
+        <div class="news-card">
+          <h3>AI 기반 치매 진단 정확도 높인다…서울대병원, 의료현장 적용</h3>
+          <p>서울대병원이 AI 기반 치매 조기 진단 모델을 개발해 실제 의료현장에 적용하고 있으며...</p>
+          <span class="date">2024-06-26</span>
+          <a href="https://www.medipana.com/article/view.php?page=2&sch_menu=1&sch_cate=D&news_idx=343537" target="_blank">자세히 보기</a>
+        </div>
+
+        <div class="news-card">
+          <h3>“치매 예방에 AI가 뜬다”…AI가 고위험군 조기 발견</h3>
+          <p>치매 예방을 위해 인공지능(AI)을 활용한 조기 위험군 탐지 기술이 주목받고 있으며...</p>
+          <span class="date">2024-07-01</span>
+          <a href="https://www.etoday.co.kr/news/view/2482727" target="_blank">자세히 보기</a>
+        </div>
+
+        <div class="news-card">
+          <h3>고령사회 진입한 한국, AI 활용 치매관리 전략 본격화</h3>
+          <p>치매 환자 수 증가에 대응하기 위해 AI 기반 치매 예측 및 관리 시스템이 도입되고 있으며...</p>
+          <span class="date">2024-06-20</span>
+          <a href="https://www.dementianews.co.kr/news/articleView.html?idxno=10186" target="_blank">자세히 보기</a>
+        </div>
+
+        <div class="news-card">
+          <h3>보건복지부, ‘치매국가책임제’ 2기 추진…지역 맞춤형 강화</h3>
+          <p>보건복지부가 ‘치매국가책임제’ 2기를 시작하며, 지역사회 기반 치매 예방 및 관리 서비스를 강화...</p>
+          <span class="date">2024-06-28</span>
+          <a href="https://www.k-health.com/news/articleView.html?idxno=83011" target="_blank">자세히 보기</a>
+        </div>
+
+        <div class="news-card">
+          <h3>“AI로 치매 조기 발견”…MBC가 간다</h3>
+          <p>치매 조기 발견을 위한 AI 기술 도입이 활발해지며, 의료 현장뿐 아니라 지자체도 관련 기술 도입 중...</p>
+          <span class="date">2024-07-08</span>
+          <a href="https://imnews.imbc.com/replay/2024/nw930/article/6640883_36507.html" target="_blank">자세히 보기</a>
+        </div>
+      </div>
+      <button class="next">&gt;</button>
+    </div>
+  </section>
+  <!-- [뉴스 슬라이드 영역 끝] -->
+
+  <!-- 메인 슬라이드 연결 js 슬라이더기능+ 공동예측폼 사이드바 -->
+  <script src="js/slider.js"></script>
+  <script src="js/script.js"></script>
+
+
+  <!-- 푸터 영역 -->
+  <footer id="site-footer">
+    <div class="footer-content">
+      <div class="footer-logo-box">
+        <span class="footer-logo">SolCare</span>
+      </div>
+
+  
+          <div class="footer-info">
+            <p class="footer-title">개인정보처리방침</p>
+            <p>03159 서울특별시 종로구 돈화문로 26, 4층(묘동, 단성사)</p>
+            <p>Tel. 02-1234-5678 &nbsp; Email. hongsena87@gmail.com</p>
+            <p class="footer-copy">© 2025 SolCare. 김윤지 김예진 홍세나.</p>
+          </div>
+
+
+      <div class="footer-right">
+        <label for="family-site">Site  Address</label>
+        <select id="family-site" onchange="if(this.value) window.open(this.value)">
+          <option value="">선택하세요</option>
+          <option value="https://github.com/">GitHub</option> <!-- 필요한 외부 링크 추가 -->
+          <option value="https://example.com">논문자료</option>
+        </select>
+      </div>
+    </div>
+  </footer>
+  <!--푸터 영역 끝-->
+
+</body>
+</html>

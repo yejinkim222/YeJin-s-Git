@@ -1,0 +1,105 @@
+# lasso 회귀에서 alpha 튜닝 후
+# xgboost 재학습
+# 상위 3개 결과만 출력
+import pandas as pd
+from sklearn.linear_model import Lasso
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import r2_score
+from xgboost import XGBRegressor
+
+# 📌 데이터 로딩
+file_path = "C:/workspace/Project01/data/hrs/selected_data/11.ml_start/03.AD_train_derived.csv"
+df = pd.read_csv(file_path)
+
+# 📌 기본 변수 정의
+target = "years_until_ad"
+feature_cols = [
+    'age', 'gender', 'edu_yrs', 'has_db', 'AD_MCI_status', 'has_hibpe',
+    'edu_level', 'years_until_mci', 'years_until_db', 'years_until_hibpe',
+    'years_until_hibpe_missing', 'has_hibpe_missing', 'years_until_mci_missing',
+    'years_until_db_missing', 'edu_yrs_missing','age_group5', 
+    'risk_factor_sum', 'edu_is_low', 'risk_weighted_age',
+    'male_age', 'female_age'
+]
+
+# 📌 Train/Test 분리
+X = df[feature_cols]
+y = df[target]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 📌 실험용 alpha 리스트
+lasso_alphas = [0.01, 0.03, 0.05, 0.07, 0.1]
+
+# 📌 고정된 XGBoost 파라미터
+xgb_params = {
+    'max_depth': 3,
+    'learning_rate': 0.1,
+    'n_estimators': 500,
+    'random_state': 42,
+    'early_stopping_rounds': 30
+}
+
+results = []
+
+for alpha in lasso_alphas:
+    lasso = Lasso(alpha=alpha)
+    lasso.fit(X_train, y_train)
+    selected_features = X_train.columns[lasso.coef_ != 0].tolist()
+
+    if not selected_features:
+        continue
+
+    model = XGBRegressor(**xgb_params)
+    model.fit(
+        X_train[selected_features], y_train,
+        eval_set=[(X_test[selected_features], y_test)],
+        verbose=False
+    )
+    y_pred = model.predict(X_test[selected_features])
+    score = r2_score(y_test, y_pred)
+
+    results.append({
+        'alpha': alpha,
+        'r2_score': score,
+        'model': model,
+        'selected_features': selected_features
+    })
+
+# 📊 상위 3개 결과만 정리해서 출력
+top_results = sorted(results, key=lambda x: x['r2_score'], reverse=True)[:3]
+
+print("\n🔍 XGBoost (Lasso 기반 피처 선택 후 재학습) 상위 3개 결과")
+for i, res in enumerate(top_results, 1):
+    print(f"\n🔷 {i}. alpha={res['alpha']} → R² = {res['r2_score']:.4f}")
+    model = res['model']
+    importances = pd.Series(model.feature_importances_, index=res['selected_features'])
+    top_feats = importances.sort_values(ascending=False).head(5)
+    print("   📌 중요 변수:")
+    for feat, val in top_feats.items():
+        print(f"     - {feat}: {val:.4f}")
+
+# 결과
+# 🔍 XGBoost (Lasso 기반 피처 선택 후 재학습) 상위 3개 결과
+# 🔷 1. alpha=0.01 → R² = 0.2418
+#    📌 중요 변수:
+#      - has_hibpe_missing: 0.5482
+#      - years_until_hibpe: 0.0710
+#      - years_until_db: 0.0687
+#      - risk_weighted_age: 0.0658
+#      - has_hibpe: 0.0581
+
+# 🔷 2. alpha=0.05 → R² = 0.2385
+#    📌 중요 변수:
+#      - has_hibpe_missing: 0.5353
+#      - years_until_hibpe: 0.0823
+#      - years_until_db: 0.0791
+#      - risk_weighted_age: 0.0717
+#      - age: 0.0586
+
+# 🔷 3. alpha=0.07 → R² = 0.2385
+#    📌 중요 변수:
+#      - has_hibpe_missing: 0.5353
+#      - years_until_hibpe: 0.0823
+#      - years_until_db: 0.0791
+#      - risk_weighted_age: 0.0717
+#      - age: 0.0586
