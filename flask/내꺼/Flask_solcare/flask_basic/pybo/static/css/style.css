@@ -1,0 +1,324 @@
+
+:root {
+  /* 확인, 메인 버튼 컬러 */
+  --primary-color: #26a69a;
+  --primary-hover: #1a776f;
+
+  /* 취소(보조 버튼) 컬러 */
+  --cancel-color: #6faea9;    
+  --cancel-hover: #599d97;    
+}
+
+
+
+
+/* ===== 공통 초기화 및 전역 설정 ===== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+body {
+  background-color: #f1f8e9;
+  color: #004d40;
+  font-family: 'Noto Sans KR', sans-serif;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  /* overflow-y: scroll; 이건 억지로 생긴 스크롤바 노노 */ 
+}
+.hidden {
+  display: none;
+}
+
+
+/* 헤더 및 네비게이션 */
+header {
+  width: 100%; /*너비고정*/
+  position: relative;
+  z-index: 9999;
+  height: 60px;      /* 로고와 메뉴상단바 두께 조정*/
+  background: #014c40;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0  30px;    /*로고와 메뉴 벽에 안붙게 30떨어트림*/
+}
+.logo a{
+  font-weight: bold;
+  font-size: 32px;
+  line-height: 60px;   /*헤더와 상단 두께 맞추기 */
+  color: #ffffff;
+  cursor: pointer;
+}
+nav {
+  display: flex;
+  justify-content: flex-end;
+}
+nav ul {
+  display: flex;
+  list-style: none;
+  gap: 60px;
+  padding-left: 0;
+}
+nav ul li {
+  position: relative;
+  z-index: 10;
+}
+nav ul li a {
+  text-decoration: none;
+  color: #ffffff;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 16px;
+  white-space: nowrap;
+  padding: 0 5px;
+}
+nav ul li a:hover {
+  color: #ffe082;
+}
+nav ul li ul {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 99;
+  background: #ffffff;
+  border: 1px solid #ddd;
+  padding: 10px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  opacity: 0;
+  pointer-events: none;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 200px;
+}
+nav ul li:hover ul {
+  display: flex;
+  opacity: 1;
+  pointer-events: auto;
+}
+nav ul li ul li a {
+  color: #555;
+  font-weight: normal;
+  padding: 8px 10px;
+  line-height: 1;
+  display: block;
+  text-align: center;
+}
+nav ul li ul li a:hover {
+  background-color: #f0f0f0;
+  color: #00796b;
+  border-radius: 8px;
+}
+
+
+
+/* 푸터 스타일 */
+#site-footer {
+  background-color: #1c1c1c;
+  color: #aaa;
+  padding: 40px 0px;
+  font-size: 0.9rem;
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 40px;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.footer-left {
+  flex: 1;
+  min-width: 300px;
+  /* margin-bottom: 20px; */
+}
+
+.footer-logo {
+  font-size: 3.0rem;
+  color: #fff;
+  margin-bottom: 10px;
+}
+
+.footer-address {
+  line-height: 1.6;
+  color: #ccc;
+}
+
+.footer-copy {
+  margin-top: 10px;
+  color: #666;
+  font-size: 0.8rem;
+}
+
+.footer-right {
+  min-width: 200px;
+  text-align: right;
+}
+
+.footer-right select {
+  background: #2c2c2c;
+  color: #eee;
+  padding: 6px 12px;
+  border: 1px solid #444;
+  border-radius: 4px;
+}
+
+
+
+.sidebar {
+  position: fixed;
+  top: 60px;
+  left: 0;
+  width: 220px;
+  background: #ffffff;
+  border-right: 1px solid #ddd;
+  padding: 10px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+}
+/* 질병정보슬라이드바 */
+.sidebar h3 {
+  font-size: 15px;
+  color: #333;
+  border-bottom: 1px solid #bbb;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  padding-top: 10px;
+}
+/*센터 슬라이드바*/
+.center-sidebar {
+  background-color: #ffffff;
+  border-right: 2px solid #004d40;
+}
+.center-sidebar h3 {
+  color: #004d40;
+}
+.sidebar ul {
+  top: 20px;                    /* 지역선택과 전체 사이 너비 */
+  height: calc(100vh - 60px);  /* 8/6 수정 헤더 빼고 꽉 채우기 */
+  overflow-y: auto;           /* 8/6 수정 스크롤 생기게 함 */
+  list-style: none;
+  margin-bottom: 20px;
+  display: block;
+  position: relative;  /* 8/6 수정 fixed x → relative로 수정 */
+  z-index: 10;         /* 8/6 수정 지도가 뒤로 가게 함 */
+  width: 220px;
+  background: #fff;
+  border-right: 1px solid #ddd;
+  padding: 0px;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+}
+
+.sidebar ul li {
+  font-size: 14px;
+  padding: 6px 10px;
+  margin-bottom: 5px;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.2s ease, font-weight 0.2s ease;
+}
+.sidebar ul li:hover,
+.sidebar ul li.active {
+  background-color: #ffe29a;    /*8/6 #e0f7fa 이색은 옅은 녹색 둘중하나 하면됨 */
+  font-weight: bold;
+  color: #004d40;
+}
+.sidebar .back-btn {
+  display: block;
+  margin-top: 30px;
+  padding: 10px 20px;
+  background: #2283e4;
+  color: white;
+  text-align: center;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 15px;
+}
+.sidebar .back-btn:hover {
+  background: #00796d;
+}
+
+
+
+/* 질병 정보 화면 = */
+.disease-wrapper {
+  display: flex;
+  min-height: calc(100vh - 60px);
+}
+.disease-sidebar {
+  position: fixed;
+  top: auto;
+  left: 0;
+  width: 220px;
+  height: 800px;
+  background-color: #f8fafc;
+  border-right: 2px solid #e3f2fd;
+  display: flex;
+  align-items: center;   /* 내부 세로 중앙 정렬 */
+  justify-content: center; /* 내부 가로 중앙 (필요 시) */
+}
+.disease-sidebar h3 {
+  font-size: 15px;
+  color: #333;
+  border-bottom: 1px solid #bbb;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  padding-top: 10px;
+  font-size: 15px;
+  margin-bottom: 10px;
+  color: #1565c0;
+}
+.disease-sidebar ul li.active,
+.disease-sidebar ul li:hover {
+  background-color: #e3f2fd;
+  color: #e3f2fd;
+  font-weight: bold;
+}
+.disease-sidebar .back-btn {
+  margin-top: 20px;  /*항목과 간격만 유지 */
+  padding: 10px;
+  background: #1976d2;
+  color: white;
+  text-align: center;
+  border-radius: 6px;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  width: 100%;
+}
+.disease-sidebar .back-btn:hover {
+  background-color: #1565c0;
+}
+.content {
+  margin-left: 220px;
+  flex-grow: 1;
+  padding: 30px;
+}
+/* 정보 입력 */
+section { margin-bottom: 60px; }
+section h2 { 
+  color: #1976d2; 
+  margin-bottom: 15px; 
+  font-size: 24px; 
+  /* text-align: center;  이거 맍면 질병정보 센터로 간다 만지짖ㅁ라 */
+}
+section h2.icon-title::before { 
+  content: "🔍 "; 
+  margin-right: 5px; 
+}
+section h3 { margin-bottom: 10px; font-size: 18px; color: #004d40; }
+section h3.icon-title::before { content: "🧠 "; margin-right: 5px; }
+section p { color: #333; line-height: 1.6; margin-bottom: 15px; }
+

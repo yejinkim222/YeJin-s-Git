@@ -1,0 +1,21 @@
+{
+  "name":"김윤지",
+  "Age": 72,
+  "Gender": "Male",
+  "Diabetic": 1,
+  "Education_Level": 3,
+  "Family_History": 1,
+  "Smoking_Status": "former",
+  "APOE_e4": 1,
+  "Physical_Activity": "medium",
+  "Nutrition_Diet": "normal",
+  "Sleep_Quality": "fair",
+  "Depression_Status": 0,
+  "Chronic_Health_Conditions": ["diabetes"],
+  "HeartRate": 78,
+  "BloodOxygenLevel": 96.5,
+  "Weight": 62.4,
+  "MRI_Delay": 10,
+  "Medication_History": 3
+}
+

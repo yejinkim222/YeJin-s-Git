@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SolCare - MCI 예측 입력</title>
+    <link rel="stylesheet" href="/static/css/style.css" />
+    <link rel="stylesheet" href="/static/css/mci/mci_input.css" />
+
+</head>
+
+<body>
+    <div id="header-placeholder"></div>
+
+    <section class="predict-section">
+        <h2>MCI 예측 입력</h2>
+        <form id="predictForm">
+            <label for="age">나이</label>
+            <input type="number" id="age" name="age" />
+
+            <label>성별</label>
+            <div class="radio-group">
+                <label><input type="radio" name="gender" value="0" /> 남성</label>
+                <label><input type="radio" name="gender" value="1" /> 여성</label>
+            </div>
+
+            <label for="education">교육 수준</label>
+            <select id="education" name="education">
+                <option value="">선택하세요</option>
+                <option value="0">무학(0~5년)</option>
+                <option value="6">초졸(6~8년)</option>
+                <option value="9">중졸(9~11년)</option>
+                <option value="12">고졸(12~13년)</option>
+                <option value="14">대졸 이상(14년 이상)</option>
+            </select>
+
+            <label>당뇨 여부</label>
+            <div class="radio-group">
+                <label><input type="radio" name="db" value="1" /> 있음</label>
+                <label><input type="radio" name="db" value="0" /> 없음</label>
+            </div>
+
+            <label>고혈압 여부</label>
+            <div class="radio-group">
+                <label><input type="radio" name="hibpe" value="1" /> 있음</label>
+                <label><input type="radio" name="hibpe" value="0" /> 없음</label>
+            </div>
+
+            <!-- ✅ 인지 기능 상태 입력 -->
+            <label for="cog_input_mode">인지 기능 상태 입력</label>
+            <!-- ✅ HTML 수정: cog_choice -> cog_input_mode 로 id, name 정정 -->
+            <div class="radio-group" id="cog_input_mode_wrapper">
+                <label><input type="radio" name="cog_input_mode" value="mci" checked> MCI 여부 입력</label>
+                <label><input type="radio" name="cog_input_mode" value="mmse"> MMSE 점수 입력</label>
+            </div>
+
+            <!-- ✅ ① 처음부터 hidden 클래스로 감추고, inline style 은 삭제 -->
+            <div class="form-row hidden" id="mci_input_field">
+                <label>MCI 여부</label>
+                <div class="radio-group">
+                    <label><input type="radio" name="has_mci" value="1"> 있음</label>
+                    <label><input type="radio" name="has_mci" value="0"> 없음</label>
+                </div>
+            </div>
+
+            <div class="form-row hidden" id="mmse_input_field">
+                <label for="mmse_score">MMSE 점수</label>
+                <input type="number" id="mmse_score" name="mmse_score" />
+            </div>
+
+            <label for="period">예측 기간 (년)</label>
+            <input type="number" id="period" name="period" />
+
+            <button type="button" class="predict-btn" onclick="window.location.href='mci_output.html'">예측 시작하기</button>
+        </form>
+        <a href="index.html" class="back-btn" style="display: block; text-align: center; margin-top: 30px;">◀ 돌아가기</a>
+    </section>
+    <div id="footer-placeholder"></div>
+    <script src="../static/js/mci_js/mci_input.js"></script>
+
+    <script>
+        fetch("../shared/header.html")
+            .then(res => res.text())
+            .then(data => {
+                document.getElementById("header-placeholder").innerHTML = data;
+            });
+    </script>
+    <script>
+        fetch("../shared/footer.html")
+            .then(res => res.text())
+            .then(data => {
+                document.getElementById("footer-placeholder").innerHTML = data;
+            });
+    </script>
+</body>
+
+</html>

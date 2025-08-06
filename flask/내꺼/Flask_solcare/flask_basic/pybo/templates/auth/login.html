@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <title>로그인 페이지</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/auth/auth.css">
+    <link href="https://fonts.googleapis.com/css2?family=Spoqa+Han+Sans&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div id="container">
+        <div id="header-placeholder"></div>
+            <div class="login">
+                <h2>로그인</h2>
+                <form>
+                    <input type="text" placeholder="아이디" required />
+                    <input type="password" placeholder="비밀번호" required />
+                    <button type="submit" class="login-btn">로그인</button>
+                    <a href="signup.html" class="signup-btn">회원가입</a>
+                </form>
+            </div>
+
+        <div id="footer-placeholder"></div>
+
+        <script>
+            fetch("../shared/header.html")
+                .then(res => res.text())
+                .then(data => {
+                    document.getElementById("header-placeholder").innerHTML = data;
+                });
+        </script>
+        <script>
+            fetch("../shared/footer.html")
+                .then(res => res.text())
+                .then(data => {
+                    document.getElementById("footer-placeholder").innerHTML = data;
+                });
+        </script>
+</body>
+
+</html>

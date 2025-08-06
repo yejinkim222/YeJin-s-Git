@@ -1,0 +1,95 @@
+
+[
+  {
+    "feature": "Diabetic",
+    "importance": 0.009293985553085804
+  },
+  {
+    "feature": "HeartRate",
+    "importance": 0.013943986967206001
+  },
+  {
+    "feature": "BloodOxygenLevel",
+    "importance": 0.012831324711441994
+  },
+  {
+    "feature": "Weight",
+    "importance": 0.009713876061141491
+  },
+  {
+    "feature": "MRI_Delay",
+    "importance": 0.011822326108813286
+  },
+  {
+    "feature": "Age",
+    "importance": 0.0121347326785326
+  },
+  {
+    "feature": "Education_Level",
+    "importance": 0.012595562264323235
+  },
+  {
+    "feature": "Gender",
+    "importance": 0.00886093731969595
+  },
+  {
+    "feature": "Family_History",
+    "importance": 0.011548597365617752
+  },
+  {
+    "feature": "APOE_e4",
+    "importance": 0.07420989871025085
+  },
+  {
+    "feature": "Depression_Status",
+    "importance": 0.5775967240333557
+  },
+  {
+    "feature": "Medication_History",
+    "importance": 0.010234519839286804
+  },
+  {
+    "feature": "Sleep_Quality",
+    "importance": 0.01117732748389244
+  },
+  {
+    "feature": "Chronic_Health_Conditions",
+    "importance": 0.01612805761396885
+  },
+  {
+    "feature": "Smoking_Status_Current Smoker",
+    "importance": 0.11901061981916428
+  },
+  {
+    "feature": "Smoking_Status_Former Smoker",
+    "importance": 0.01228500995784998
+  },
+  {
+    "feature": "Smoking_Status_Never Smoked",
+    "importance": 0.006400696467608213
+  },
+  {
+    "feature": "Nutrition_Diet_Balanced Diet",
+    "importance": 0.01176747027784586
+  },
+  {
+    "feature": "Nutrition_Diet_Low-Carb Diet",
+    "importance": 0.008923768065869808
+  },
+  {
+    "feature": "Nutrition_Diet_Mediterranean Diet",
+    "importance": 0.019561108201742172
+  },
+  {
+    "feature": "Physical_Activity_Mild Activity",
+    "importance": 0.009192818775773048
+  },
+  {
+    "feature": "Physical_Activity_Moderate Activity",
+    "importance": 0.009352563880383968
+  },
+  {
+    "feature": "Physical_Activity_Sedentary",
+    "importance": 0.01141411904245615
+  }
+]

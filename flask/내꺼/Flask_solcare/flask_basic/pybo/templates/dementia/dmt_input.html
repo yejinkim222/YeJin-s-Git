@@ -1,0 +1,214 @@
+<!-- 자가진단 테스트 페이지 -->
+
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" contet="width=device-width, initial-scale=1.0" />
+    <title>치매 예측 서비스</title>
+    <!-- <base href="../"> -->
+    <!-- <link rel="stylesheet" href="/solcare_css/style.css"> -->
+    <!-- <link rel="stylesheet" href="../solcare_css/form.css"> -->
+    <link rel="stylesheet" href="/static/css/style.css" />
+    <link rel="stylesheet" href="/static/css/dementia/dmt_input.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Spoqa+Han+Sans&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div id="header-placeholder"></div>
+
+    <div id="container">
+
+        <div class="predict-form">
+            <h2>치매 예측을 위한 정보 입력</h2>
+            <form>
+                <ul>
+                    <li>
+                        <label for="age">나이</label>
+                        <input type="number" id="age" required>
+                    </li>
+                    <li>
+                        <label for="gender">성별</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="gender" value="male" /> 남성</label>
+                            <label><input type="radio" name="gender" value="female" /> 여성</label>
+                        </div>
+                    </li>
+                    <li>
+                        <label for="diabetic">당뇨 여부</label>
+                        <select id="diabetic">
+
+                            <option value="1">있음</option>
+                            <option value="0">없음</option>
+                        </select>
+                    </li>
+                    <li>
+                        <label for="education">교육 수준</label>
+                        <select id="education">
+
+                            <option value="0">무학</option>
+                            <option value="1">초등학교</option>
+                            <option value="2">중학교</option>
+                            <option value="3">고등학교</option>
+                            <option value="4">대학교 이상</option>
+                        </select>
+                    </li>
+                    <li>
+                        <label for="family_history">가족력</label>
+                        <select id="family_history">
+
+                            <option value="1">있음</option>
+                            <option value="0">없음</option>
+                        </select>
+                    </li>
+                    <li>
+                        <label for="smoking_status">흡연 상태</label>
+                        <select id="smoking_status">
+
+                            <option value="never">비흡연</option>
+                            <option value="former">과거 흡연</option>
+                            <option value="current">현재 흡연</option>
+                        </select>
+                    </li>
+                    <li>
+                        <label for="apoe">APOE ε4 유전자</label>
+                        <select id="apoe">
+
+                            <option value="1">있음</option>
+                            <option value="0">없음</option>
+                            <option value="-1">모름</option>
+                        </select>
+                    </li>
+                    <li>
+                        <label for="physical_activity">신체활동 수준</label>
+                        <select id="physical_activity">
+
+                            <option value="low">낮음</option>
+                            <option value="medium">중간</option>
+                            <option value="high">높음</option>
+                        </select>
+                    </li>
+                    <li>
+                        <label for="nutrition_diet">식이 유형</label>
+                        <select id="nutrition_diet">
+
+                            <option value="normal">일반식</option>
+                            <option value="low_salt">저염식</option>
+                            <option value="low_carb">저탄수화물</option>
+                        </select>
+                    </li>
+                    <li>
+                        <label for="sleep_quality">수면 질</label>
+                        <select id="sleep_quality">
+
+                            <option value="good">좋음</option>
+                            <option value="fair">보통</option>
+                            <option value="poor">나쁨</option>
+                        </select>
+                    </li>
+                    <li>
+                        <label for="depression">우울증 여부</label>
+                        <select id="depression">
+
+                            <option value="1">있음</option>
+                            <option value="0">없음</option>
+                        </select>
+                    </li>
+                    <li>
+                        <label for="chronic_conditions">만성질환</label>
+                        <select id="chronic_conditions">
+                            <option value="diabetes">당뇨</option>
+                            <option value="hypertension">고혈압</option>
+                            <option value="stroke">뇌졸중</option>
+                            <option value="cardio">심혈관</option>
+                        </select>
+                    </li>
+                    <li>
+                        <label for="heart_rate">심박수</label>
+                        <input type="number" id="heart_rate">
+                    </li>
+                    <li>
+                        <label for="blood_oxygen">혈중 산소 농도</label>
+                        <input type="number" id="blood_oxygen">
+                    </li>
+                    <li>
+                        <label for="weight">체중 (kg)</label>
+                        <input type="number" id="weight">
+                    </li>
+                    <li>
+                        <label for="mri_delay">MRI 검사 지연일 (일)</label>
+                        <input type="number" id="mri_delay">
+                    </li>
+                    <li>
+                        <label for="cognitive_score">인지기능 점수</label>
+                        <input type="number" id="cognitive_score">
+                    </li>
+                    <li>
+                        <label for="medication_history">약 복용 이력 (건수)</label>
+                        <input type="number" id="medication_history">
+                    </li>
+                </ul>
+                <button type="button" class="predict-btn" onclick="window.location.href='dmt_output.html'">예측
+                    시작하기</button>
+            </form>
+            <a href="index.html" class="back-btn" style="display: block; text-align: center; margin-top: 30px;">◀
+                돌아가기</a>
+        </div>
+
+        </section>
+        <div id="footer-placeholder"></div>
+
+
+        <script>
+            function handleSubmit(event) {
+                event.preventDefault();
+
+                const get = id => document.getElementById(id)?.value || "";
+
+                const data = {
+                    name: get("name"),
+                    Age: get("Age"),
+                    Gender: get("Gender"),
+                    Diabetic: get("Diabetic"),
+                    Education_Level: get("Education_Level"),
+                    Family_History: get("Family_History"),
+                    Smoking_Status: get("Smoking_Status"),
+                    APOE_e4: get("APOE_e4"),
+                    Physical_Activity: get("Physical_Activity"),
+                    Nutrition_Diet: get("Nutrition_Diet"),
+                    Sleep_Quality: get("Sleep_Quality"),
+                    Depression_Status: get("Depression_Status"),
+                    Chronic_Health_Conditions: get("Chronic_Health_Conditions"),
+                    HeartRate: get("HeartRate"),
+                    BloodOxygenLevel: get("BloodOxygenLevel"),
+                    Weight: get("Weight"),
+                    MRI_Delay: get("MRI_Delay"),
+                    Medication_History: get("Medication_History"),
+                    risk_score: Math.floor(Math.random() * 40) + 60,
+                    risk_level: "높음",
+                    input_summary: "나이:" + get("Age") + ", 교육:" + get("Education_Level") + ", 유전자:" + get("APOE_e4")
+                };
+
+                localStorage.setItem("output_data", JSON.stringify(data));
+                window.location.href = "dmt_output.html";
+            }
+        </script>
+
+        <script>
+            fetch("../shared/header.html")
+                .then(res => res.text())
+                .then(data => {
+                    document.getElementById("header-placeholder").innerHTML = data;
+                });
+        </script>
+        <script>
+            fetch("../shared/footer.html")
+                .then(res => res.text())
+                .then(data => {
+                    document.getElementById("footer-placeholder").innerHTML = data;
+                });
+        </script>
+</body>
+
+</html>

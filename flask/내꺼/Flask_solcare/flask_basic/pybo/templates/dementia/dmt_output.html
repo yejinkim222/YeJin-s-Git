@@ -1,0 +1,79 @@
+<!-- 차트결과 화면 -->
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>치매 위험 예측</title>
+
+    <!-- 스타일과 폰트 -->
+    <!-- <link rel="stylesheet" href="../solcare_css/style.css" /> -->
+    <link rel="stylesheet" href="/static/css/style.css" />
+    <link rel="stylesheet" href="/static/css/dementia/dmt_output.css" />
+    
+    <link href="https://fonts.googleapis.com/css2?family=Spoqa+Han+Sans&display=swap" rel="stylesheet" />
+</head>
+
+<body>
+    <div id="header-placeholder"></div>
+    <div id="container">
+
+
+        <!-- 위쪽 차트 -->
+        <div class="chart-container">
+            <!-- <div class="chart-section"> -->
+            <canvas id="gaugeChart"></canvas>
+            <p id="resultText" class="result-text"></p>
+        </div>
+
+        <!-- 아래 차트 -->
+        <div class="chart-container">
+            <!-- <div class="chart-section"></div> -->
+            <canvas id="importanceChart"></canvas>
+            <p id="summaryText" class="summary-text"></p>
+        </div>
+
+        <div class="chart-container">
+            <div class="notice-box">
+                ⚠️ 본 결과는 모델 예측을 기반으로 생성한 임의의 시각 자료로 실제 발병 시점과 차이가 있을 수 있습니다.
+            </div>
+            <div class="action-buttons">
+                <button onclick="location.href='mci_input.html'" class="btn-primary">인지 저하 시점 예측하기</button>
+                <button onclick="location.href='map.html'" class="btn-secondary">우리 동네 치매센터 찾기</button>
+            </div>
+
+        </div>
+
+        <!-- Chart.js 로딩 -->
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+        <!--  Chart.js 로직 분리 파일 ( 경로 주의) -->
+        <!-- <script src="./dementia_chart.js"></script>
+     <script src="./feature_chart.js"></script> -->
+        <script src="/static/js/dmt_js/dementia_chart.js"></script>
+        <script src="/static/js/dmt_js/feature_chart.js"></script>
+    </div>
+
+    <div id="footer-placeholder"></div>
+
+
+
+
+    <script>
+        fetch("../shared/header.html")
+            .then(res => res.text())
+            .then(data => {
+                document.getElementById("header-placeholder").innerHTML = data;
+            });
+    </script>
+    <script>
+        fetch("../shared/footer.html")
+            .then(res => res.text())
+            .then(data => {
+                document.getElementById("footer-placeholder").innerHTML = data;
+            });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>SolCare - MCI 예측 결과</title>
+	<link rel="stylesheet" href="/static/css/style.css" />
+    <link rel="stylesheet" href="/static/css/mci/mci_output.css" />
+</head>
+
+<body>
+	<div id="header-placeholder"></div>
+	<div class="container">
+		<h2 class="title">치매 발병 예측 결과</h2>
+
+		<!-- 그래프 영역 -->
+		<div class="graph-box">
+			<!-- 축만 표시하는 캔버스 (Chart.js 도입 전 간단 뼈대) -->
+			<canvas id="riskCanvas" width="640" height="320"></canvas>
+			<div class="legend">
+				<div><span class="marker model-center"></span>예측 발병 시점</div>
+				<div><span class="marker user-input"></span>예측 기준 시점</div>
+			</div>
+		</div>
+
+		<!-- 해석 문구가 들어갈 영역 -->
+		<div class="analysis-box" id="analysisBox">
+			<!-- JS에서 상황(early/late)에 따라 내용과 배경색이 바뀜 -->
+		</div>
+
+		<!-- 주의사항 -->
+		<div class="notice-box">
+			⚠️ 본 결과는 모델 예측을 기반으로 생성한 임의의 시각 자료로 실제 발병 시점과 차이가 있을 수 있습니다.
+		</div>
+	</div>
+	<div id="footer-placeholder"></div>
+	<script src="/static/js/mci_js/mci_output.js"></script>
+
+    <script>
+        fetch("../shared/header.html")
+            .then(res => res.text())
+            .then(data => {
+                document.getElementById("header-placeholder").innerHTML = data;
+            });
+    </script>
+    <script>
+        fetch("../shared/footer.html")
+            .then(res => res.text())
+            .then(data => {
+                document.getElementById("footer-placeholder").innerHTML = data;
+            });
+    </script>
+</body>
+
+</html>

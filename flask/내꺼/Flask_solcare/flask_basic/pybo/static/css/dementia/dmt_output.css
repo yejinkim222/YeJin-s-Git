@@ -1,0 +1,62 @@
+
+
+/* 차트 공통 */
+.chart-container {
+  /* width: 90%; 1 */
+  width: 100%;
+  /* max-width: 600px; 1 */
+  max-width: 800px;     /*700px 2*/
+  margin: 40px auto;
+  /* padding: 20px; 1 */
+  /* padding: 30px; 2 */
+  padding: 40px 30px;
+  background-color: #ffffff;
+  /* border-radius: 12px; 1 */
+  border-radius: 16px;
+  /* box-shadow: 0 2px 8px rgba(0,0,0,0.05);  1 */
+  /* box-shadow: 0 8px 16px rgba(0,0,0,0.05); 2 */
+  box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+  text-align: center;
+}
+
+canvas {
+  /* width: 100% !important;
+  height: 300px !important;  1 */
+  /* width: 100% !important;
+  height: auto !important;
+  max-height: 320px;  2 */
+  
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
+  height: auto;
+  
+}
+
+#gaugeChart {
+  height: 260px !important; /* 게이지 차트 크게 3  */
+}
+
+#importanceChart {
+  height: 360px !important; /* 중요도 막대차트 여유 있게 3 */
+}
+
+/* .result-text, .summary-text {
+  margin-top: 16px;
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+} 1  */
+.result-text {
+  font-size: 20px;
+  font-weight: bold;
+  color: #2e7d32;
+  /* margin-top: 16px; 2 */
+  margin-top: 20px;   /*3*/
+}
+.summary-text {
+  margin-top: 16px;   /*3*/
+  font-size: 16px;
+  color: #555;
+}
+

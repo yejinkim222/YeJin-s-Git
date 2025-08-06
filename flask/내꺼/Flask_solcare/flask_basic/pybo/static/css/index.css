@@ -1,0 +1,399 @@
+
+
+/* 메인페이지 */
+/* 부모요소의 전체 높이 */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+.main-page {
+  position: relative;
+  /* height: calc(100vh - 60px); */
+  height: 100vh;    /* 전체 화면 높이 */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;   /*화면 가운데 박스 중간*/
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;      /*메인 페이지 스크롤바 생기게하는거*/
+}
+.hero-bg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 30%;
+  filter: brightness(0.8) contrast(1.1);
+  position: absolute;
+  /* top: 0;
+  left: 0; */
+  z-index: 1;
+}
+.hero-textbox {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.5);   /*메인텍스트박스 투명도조절*/
+  padding: 40px 40px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  /* margin: auto auto 150px auto; */
+  margin: 0 auto;
+  margin-top: 300px;   /*가운데 텍스트박스 중간으로 내림*/
+  max-width: 600px;
+  width: 90vw;      /*화면이 너무 작아졌을때만 줄어들도록 %말고 vw로*/
+}
+.hero-textbox h1 {
+  font-size: 28px;
+  color: #014c40;
+  margin-bottom: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.hero-textbox p {
+  font-size: 25px;
+  color: #2c852f;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+
+
+/*기능추가 메인 번째 기능 */
+.feature-section {
+  display: flex;
+  /* justify-content: space-between;
+  gap: 10px;
+  padding: 60px 10%;
+  background: #0a0a0a; 어두운 톤, 유라클 스타일
+  background-color: rgba(255, 255, 255, 0.4); */
+  justify-content: center; /* 가운데 정렬 */
+  gap: 60px;               /* 박스 사이 간격 크게 */
+  padding: 120px 5%;       /* 위아래 넉넉히 */
+  background-color: #f1f8e9;
+  flex-wrap: wrap;         /* 모바일 대응 */
+}
+
+.feature-box {
+  flex: 0 0 30%;           /* 가로 너비 30% 고정 */
+  max-width: 400px;
+  height: 600px;           /* 유라클처럼 큼직하게 */
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.feature-box.disease {
+  background-image: url('/static/images/image_brain_pixabay.png'); /* 예: 질병정보 이미지 */
+}
+.feature-box.predict {
+  background-image: url('/static/images/image_ai_intall_pixabay.jpg'); /* 예: AI예측 */
+}
+.feature-box.center {
+  background-image: url('/static/images/image_x-ray_pixabay.jpg'); /* 예: 지도 이미지 */
+}
+
+.feature-box:hover {
+  transform: scale(1.03);
+}
+
+.feature-overlay {
+  /* background-color: rgba(255, 255, 255, 0.4);     밝은 필터 
+  color: #004d40;     고급 진녹색 
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 40px;
+  text-align: center;
+  font-weight: 500; */
+  background: rgba(0, 0, 0, 0.4); /* 글자 배경 어둡게 */
+  color: #fff;
+  backdrop-filter: blur(1px); /* px 높일수록 배경 흐리기 */
+  -webkit-backdrop-filter: blur(4px);
+  height: 100%;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+}
+
+.feature-overlay h2 {
+  /* font-size: 30px;
+  font-weight: 700;
+  color: #2e7d32;  신뢰감 있는 진초록
+  margin-bottom: 18px; */
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.feature-overlay p {
+  /* font-size: 16px;
+  color: #f5f3f3;
+  margin-bottom: 24px;
+  line-height: 1.6; */
+  font-size: 18px;
+  line-height: 1.6;
+  margin-bottom: 28px;
+  color: #f0f0f0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.feature-overlay button {
+  /* background-color: transparent;
+  border: 2px solid #2e7d32;
+  color: #2e7d32;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 10px;
+  transition: all 0.3s ease; */
+  font-size: 16px;
+  font-weight: bold;
+  padding: 14px 28px;
+  border: none;
+  background-color: #59a8f8;
+  color: white;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.feature-overlay button:hover {
+  /* background-color: #2e7d32;
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3); */
+  background-color: #1565c0;
+}
+/* 기능추가 메인 번째 기능스타일 마지막 */
+
+
+/* 메인 페이지 이미지슬라이더 기능 (화살표 + 점 + 이미지) */
+.slider .slide {
+  display: none;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+.slider .slide.active {
+  display: block;
+  z-index: 1;
+}
+
+.arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(255,255,255,0.3);
+  border: 1px solid white;
+  border-radius: 50%;
+  padding: 12px;
+  cursor: pointer;
+  z-index: 10;
+}
+.arrow:hover {
+  background-color: rgba(255,255,255,0.7);
+}
+.arrow.left {
+  left: 20px;
+}
+.arrow.right {
+  right: 20px;
+}
+
+.dots {
+  position: absolute;
+  bottom: 30px;
+  width: 100%;
+  text-align: center;
+  z-index: 10;
+}
+.dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin: 0 5px;
+  background-color: rgba(255,255,255,0.5);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+.dot.active {
+  background-color: white;
+}
+
+
+.notice-box {
+    background-color: #e9ecef; /* 연한 회색 */
+    color: #495057;            /* 어두운 회색 텍스트 */
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    text-align: center;
+    margin-top: 16px;
+}
+
+
+
+/* 뉴스 슬라이드 전용 스타일 */
+#news-slider {
+  background-color: #f5f7fa;
+  padding: 60px 20px 40px;     /*위쪽 여백을 늘리고 아래 여백 확보*/
+  margin-top: 60px;
+  margin-bottom: 80px;      /*푸터와 겹치지 않게 */
+  text-align: center;
+}
+
+#news-slider h2 {
+  font-size: 1.8rem;
+  margin-bottom: 30px;    /*제목과 카드 사이 간격조절*/
+  color: #333;
+}
+
+.slider-wrapper {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  padding: 20px 40px;
+  box-sizing: border-box;
+}
+
+.slider-track {
+  /* display: flex;
+  justify-content: center;   가운데 정렬 
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  gap: 20px;
+  padding: 20px 10px;
+  margin: auto;         가로정렬해서 안정화키기
+  max-width: 100; */
+  display: flex;
+  transition: transform 0.6s ease;
+  will-change: transform;
+}
+
+.news-card {
+  /* min-width: 250px;
+  max-width: 250px;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  flex-shrink: 0;
+  text-align: left;
+  transition: transform 0.2s; */
+  flex: 0 0 30%;
+  margin: 0 10px;
+  background: white;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  min-height: 220px;
+  text-align: left;
+}
+
+.news-card:hover {
+  transform: translateY(-5px);
+}
+
+.news-card h3 {
+  font-size: 1rem;
+  margin-bottom: 8px;
+  color: #222;
+}
+
+.news-card p {
+  font-size: 0.9rem;
+  color: #555;
+  height: 50px;
+  overflow: hidden;
+}
+
+.news-card .date {
+  font-size: 0.8rem;
+  color: #888;
+  display: block;
+  margin: 8px 0;
+}
+
+.news-card a {
+  display: inline-block;
+  font-size: 0.85rem;
+  color: #1e88e5;
+  text-decoration: none;
+}
+
+.slider-wrapper button {
+  position: absolute;
+  top: 45%;
+  transform: translateY(-50%);
+  background: white;
+  border: 1px solid #ccc;
+  padding: 8px 12px;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 1;
+}
+.slider-wrapper .prev { left: 0; }
+.slider-wrapper .next { right: 0; }
+/* 메인뉴스 슬라이드 마지막 */
+
+
+/* 팀원 소개 영역 */
+.team-section {
+  background: linear-gradient(180deg, #f3f4f6 0%, #eef0f8 100%);
+  padding: 80px 20px;
+  text-align: center;
+}
+.team-section h2 {
+  font-size: 32px;
+  margin-bottom: 50px;
+  color: #2c3e50;
+}
+.team-container {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+.team-card {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  padding: 30px 20px;
+  width: 260px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.team-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+.team-card img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 15px;
+}
+.team-card h3 {
+  margin-bottom: 10px;
+  font-size: 20px;
+  color: #1a237e;
+}
+.team-card p {
+  font-size: 15px;
+  color: #333;
+  line-height: 1.5;
+}
+

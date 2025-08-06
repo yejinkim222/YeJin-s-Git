@@ -1,0 +1,95 @@
+
+
+/* result.css */
+
+/* 전체 페이지 배경과 글꼴 설정 */
+body {
+    font-family: 'Spoqa Han Sans', sans-serif;
+    background-color: #f5f7fa;
+    margin: 0;
+    padding: 0;
+    color: #333;
+}
+
+/* 예측 결과 전체 박스 */
+.container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 30px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* 상단 제목 */
+.title {
+    text-align: center;
+    margin-bottom: 24px;
+    color: #222;
+}
+
+/* 그래프와 축이 들어가는 영역 */
+.graph-box {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+/* 그래프 아래 범례(색상 구분 설명) */
+.legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    font-size: 0.9rem;
+    margin-top: 8px;
+}
+
+/* 범례용 색상 점 */
+.marker {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+
+/* 예측 발병 시점을 나타내는 색상 */
+.model-center {
+    background-color: #007bff;
+}
+
+/* 사용자가 입력한 기준 시점을 나타내는 색상 */
+.user-input {
+    background-color: #f1c40f;
+}
+
+/* 예측 결과 해석 문구 상자 (빠르거나 늦은 경우 설명) */
+.analysis-box {
+    padding: 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* 예측 기준 시점이 늦은 경우 색상 */
+.analysis-box.late {
+    background-color: #fff0f0;
+    color: #9c0808;
+}
+
+/* 예측 기준 시점이 빠른 경우 색상 */
+.analysis-box.early {
+    background-color: #e6f4ea;
+    color: #1e4620;
+}
+
+/* 하단의 안내 문구 상자 */
+.notice-box {
+    background-color: #e9ecef; /* 연한 회색 */
+    color: #495057;            /* 어두운 회색 텍스트 */
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    text-align: center;
+    margin-top: 16px;
+}
