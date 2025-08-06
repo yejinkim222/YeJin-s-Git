@@ -35,7 +35,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="C:\workspace\SolCare_v0.1\venvs\solcare"
+VIRTUAL_ENV="C:\SolCare_v0.1\venvs\solcare"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

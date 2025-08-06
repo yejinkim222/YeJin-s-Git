@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set VIRTUAL_ENV=C:\workspace\SolCare_v0.1\venvs\solcare
+set VIRTUAL_ENV=C:\SolCare_v0.1\venvs\solcare
 
 if not defined PROMPT set PROMPT=$P$G
 

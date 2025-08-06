@@ -16,7 +16,7 @@ def create_app():
     from . import models
 
     #Blueprint
-    from .views import main_views, input_views, output_views, auth_views
+    from .views import main_views, mci_input_views, mci_output_views, auth_views
     app.register_blueprint(main_views.bp)
     app.register_blueprint(input_views.bp)
     app.register_blueprint(output_views.bp)
