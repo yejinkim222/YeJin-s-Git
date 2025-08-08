@@ -1,0 +1,94 @@
+{% extends 'mci/mci_input.html' %}
+{% block content %}
+<div class="container">
+    <h2>MCI 예측 정보 입력</h2>
+    <form id="predictForm" method="post">
+        {{ form.csrf_token }}
+        {% include "form_errors.html" %}
+
+            <label for="age">나이</label>
+            <input type="number" id="age" name="age" value="{{ form.age.data or ''}}"/>
+
+            <label>성별</label>
+            <div class="radio-group">
+                <label><input type="radio" name="gender" value="0"
+                {% if form.gender.data == 0 %}checked{% endif %}/> 남성</label>
+                <label><input type="radio" name="gender" value="1"
+                {% if form.gender.data == 1 %}checked{% endif %}/> 여성</label>
+            </div>
+
+            <label for="edu_level">교육 수준</label>
+            <select id="edu_level" name="edu_level">
+                <option value="">선택하세요</option>
+                <option value="0" {% if form.edu_yrs.data == 0  %}selected{% endif %}>무학(0~5년)</option>
+                <option value="1" {% if form.edu_yrs.data == 1  %}selected{% endif %}>초졸(6~8년)</option>
+                <option value="2" {% if form.edu_yrs.data == 2  %}selected{% endif %}>중졸(9~11년)</option>
+                <option value="3" {% if form.edu_yrs.data == 3  %}selected{% endif %}>고졸(12~13년)</option>
+                <option value="4" {% if form.edu_yrs.data == 4  %}selected{% endif %}>대졸 이상(14년 이상)</option>
+            </select>
+
+            <label>당뇨 여부</label>
+            <div class="radio-group">
+                <label><input type="radio" name="has_db" value="1"
+                {% if form.has_db.data == 1 %}checked{% endif %}/> 있음</label>
+                <label><input type="radio" name="has_db" value="0"
+                {% if form.has_db.data == 0 %}checked{% endif %}/> 없음</label>
+            </div>
+
+            <label>고혈압 여부</label>
+            <div class="radio-group">
+                <label><input type="radio" name="has_hibpe" value="1"
+                {% if form.has_hibpe.data == 1 %}checked{% endif %}/> 있음</label>
+                <label><input type="radio" name="has_hibpe" value="0"
+                {% if form.has_hibpe.data == 0 %}checked{% endif %}/> 없음</label>
+            </div>
+
+            <!-- 인지 기능 상태 입력 -->
+            <label for="cog_input_mode">인지 기능 상태 입력</label>
+            <!-- HTML 수정: cog_choice -> cog_input_mode 로 id, name 정정 -->
+            <div class="radio-group" id="cog_input_mode_wrapper">
+                <label><input type="radio" name="cog_input_mode" value="mci" checked> MCI 여부 입력</label>
+                <label><input type="radio" name="cog_input_mode" value="mmse"> MMSE 점수 입력</label>
+            </div>
+
+            <div class="form-row hidden" id="mci_input_field">
+                <label>MCI 여부</label>
+                <div class="radio-group">
+                    <label><input type="radio" name="has_mci_ui" value="1"
+                    {% if form.has_mci.data == 1 %}checked{% endif %}> 있음</label>
+                    <label><input type="radio" name="has_mci_ui" value="0"
+                    {% if form.has_mci.data == 0 %}checked{% endif %}> 없음</label>
+                </div>
+            </div>
+
+            <div class="form-row hidden" id="mmse_input_field">
+                <label for="mmse_score">MMSE 점수</label>
+                <input type="number" id="mmse_score" name="mmse_score" min = 0 max="30"/>
+            </div>
+            <input type="hidden" id="has_mci_hidden" name="has_mci" value="{{ form.has_mci.data or '' }}">
+
+            <label for="base_yrs">예측 기준 기간 (년)</label>
+            <input type="number" id="base_yrs" name="base_yrs" value="{{ form.base_yrs.data or '' }}"/>
+
+            <button type="submit" class="predict-btn">예측 시작하기</button>
+    </form>
+    <a href="{{ url_for('main.index') }}" class="back-btn" style="display: block; text-align: center; margin-top: 30px;">◀ 돌아가기</a>
+
+    <script src="../static/js/mci_js/mci_input.js"></script>
+
+    <script>
+        fetch("../shared/header.html")
+            .then(res => res.text())
+            .then(data => {
+                document.getElementById("header-placeholder").innerHTML = data;
+            });
+    </script>
+    <script>
+        fetch("../shared/footer.html")
+            .then(res => res.text())
+            .then(data => {
+                document.getElementById("footer-placeholder").innerHTML = data;
+            });
+    </script>
+</div>
+{% endblock %}

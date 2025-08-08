@@ -12,7 +12,10 @@
 </head>
 
 <body>
-    <div id="header-placeholder"></div>
+{% include "shared/header.html" %}
+<!--{% extends 'base.html' %}-->
+<!--{% block content %}}-->
+<!--    <div id="header-placeholder"></div>-->
 
     <!-- <section class="main-page">
     <img src="images/image_main01.png" alt="따뜻한 손" class="hero-bg" /> -->
@@ -155,10 +158,10 @@
 
     <!-- 메인 슬라이드 연결 js 슬라이더기능+ 공동예측폼 사이드바 -->
     <script src="../static/js/slider.js"></script>
-  
+
 
     <!-- 푸터 영역 -->
-   
+    {% block script %}
     <script>
         fetch("../templates/shared/header.html")
             .then(res => res.text())
@@ -173,6 +176,9 @@
                 document.getElementById("footer-placeholder").innerHTML = data;
             });
     </script>
+{% include "shared/footer.html" %}
 </body>
 
 </html>
+<!--{% endblock %}-->
+<!--{% endblock %}-->

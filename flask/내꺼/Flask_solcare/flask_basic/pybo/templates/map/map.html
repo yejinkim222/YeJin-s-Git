@@ -21,8 +21,9 @@
 </head>
 
 <body>
+    {% include "shared/header.html" %}
     <!-- 상단의 네비게이션 모든 슬라이드 공통 /각슬라이드에서 class="active"만 앞에 붙이기 -->
-    <div id="header-placeholder"></div>
+<!--    <div id="header-placeholder"></div>-->
 
 
     <!-- 맵페이지 0716붙인거 -->
@@ -71,6 +72,7 @@
                     document.getElementById("footer-placeholder").innerHTML = data;
                 });
         </script>
+    {% include "shared/footer.html" %}
 </body>
 
 </html>

@@ -60,8 +60,8 @@ document.addEventListener("DOMContentLoaded", () => {
         alert("MMSE 점수를 입력해 주세요."); mmseInput.focus(); return;
       }
       const mmseVal = parseInt(mmseInput.value, 10);
-      if (!isNaN(mmseVal) && mmseVal <= 17) {
-        alert("MMSE 점수가 17점 이하인 경우, 이미 치매로 의심되어 입력이 제한됩니다.");
+      if (!isNaN(mmseVal) && mmseVal <= 19) {
+        alert("MMSE 점수가 19점 이하인 경우, 이미 치매로 의심되어 입력이 제한됩니다.");
         mmseInput.focus(); return;
       }
     }

@@ -11,7 +11,7 @@ from pybo.models import Users
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
-# 하나도 안고침
+# 하나도 안고침 ㅎ
 @bp.route('/signup', methods=('GET','POST'))
 def signup():
     form = UserCreateForm()

@@ -10,7 +10,8 @@
 </head>
 
 <body>
-	<div id="header-placeholder"></div>
+	{% include "shared/header.html" %}
+<!--	<div id="header-placeholder"></div>-->
 	<div class="container">
 		<h2 class="title">치매 발병 예측 결과</h2>
 
@@ -51,6 +52,7 @@
                 document.getElementById("footer-placeholder").innerHTML = data;
             });
     </script>
+	{% include "shared/footer.html" %}
 </body>
 
 </html>

@@ -11,7 +11,8 @@
 </head>
 
 <body>
-    <div id="header-placeholder"></div>
+    {% include "shared/header.html" %}
+<!--    <div id="header-placeholder"></div>-->
 
     <section class="disease-wrapper">
         <nav class="sidebar disease-sidebar">
@@ -104,7 +105,6 @@
                 <p>집중력 저하, 생각 흐름 중단: 생각의 흐름이 자주 끊기고 집중력이 부족함</p>
                 <p>가족/주변인도 인지할 정도 변화</p>
             </section>
-            <div id="footer-placeholder"></div>
 
         </main>
         <script>
@@ -121,6 +121,8 @@
                     document.getElementById("footer-placeholder").innerHTML = data;
                 });
         </script>
+    </section>
+    {% include "shared/footer.html" %}
 </body>
 
 </html>

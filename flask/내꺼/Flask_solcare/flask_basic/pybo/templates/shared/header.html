@@ -1,22 +1,20 @@
 
 <header>
     <div class="logo">
-        <a href="/templates/index.html">SolCare</a>
+        <a href="{{ url_for('main.index') }}">SolCare</a>
     </div>
     <nav>
         <ul>
-            <li><a href="/templates/disease.html">질병 정보</a></li>
+            <li><a href="{{ url_for('main.disease') }}">질병 정보</a></li>
             <li>
                 <a href="#">치매 예측 서비스</a>
                 <ul class="dropdown">
-                    <!-- 윤지가 준거랑 합치면서 독거노인 바꿈 -->
                     <li><a href="/templates/dementia/dmt_input.html">치매 예측</a></li>
-                    <li><a href="/templates/mci/mci_input.html">MCI 예측</a></li>
-                    <!-- <li><a href="elderly.html">독거노인 예측</a></li> -->
+                    <li><a href="{{ url_for('mci.create_input') }}">MCI 예측</a></li>
                 </ul>
             </li>
             <li><a href="/templates/map/map.html">치매 센터 안내</a></li>
-            <li><a href="/templates/auth/login.html">로그인/회원가입</a></li>
+            <li><a href="{{ url_for('auth.login') }}">로그인/회원가입</a></li>
         </ul>
     </nav>
 </header>

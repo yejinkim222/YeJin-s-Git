@@ -1,41 +1,73 @@
 from datetime import datetime
-from flask import Blueprint, url_for, request, render_template, g, flash
-from werkzeug.utils import redirect
-
+from flask import Blueprint, render_template, request, url_for, g, flash
+from pybo.models import InputData
 from .auth_views import login_required
-from ..forms import ModelDataForm, InputDataForm
+from ..forms import InputDataForm, ModelDataForm
+from werkzeug.utils import redirect
+from .. import db
 
-from pybo import db
-from pybo.models import InputData, OutputData
+bp = Blueprint('mci', __name__, url_prefix='/mci')
 
-bp = Blueprint('mci_output', __name__, url_prefix='/mci_output')
+@bp.route('/input/', methods=['GET', 'POST'])
+# @login_required
+def create_input():
+    form = InputDataForm()
 
-def onset(data):
-    if data ==0:
-        return -1
-    else:
-        return 0
+    if request.method == 'POST' and form.validate_on_submit():
+        input_data = InputData(
+            age = form.age.data,
+            gender = form.gender.data,
+            edu_yrs = form.edu_yrs.data,
+            has_db=form.has_db.data,
+            has_hibpe = form.has_hibpe.data,
+            has_mci = form.has_mci.data,
+            base_yrs = form.base_yrs.data,
+            input_date = datetime.now(),
+            user_id = g.user.id if g.user else None
+        )
 
-# 파생 변수 계산
-def features(input_id):
-    input = InputDataForm()
+        db.session.add(input_data)
+        db.session.commit()
+
+        return redirect(url_for('mci.create_input', input_id=input_data.id))
+
+    return render_template('mci/mci_form.html', form=form)
+
+
+
+
+
+# 파생 변수 생성
+def generate_features(input_data: InputData):
+    # 온셋시점 생성용
+    def onset(data):
+        return 0 if data else -1
+
+    # 람다함수만 따로
+    x = input_data.edu_yrs
+    edu_level = 0 if x <= 5 else 1 if x <= 8 else 2 if x <= 11 else 3 if x <= 13 else 4
+    risk_factor_sum = input_data.has_db + input_data.has_mci + input_data.has_hibpe
+
+
     form = ModelDataForm()
-    model_data = OutputData.query.get_or_404(input_id)
+    model_data = ModelDataForm.query.get_or_404(input_id)
+
+
     if form.validate_on_submit():
         # 원본 입력값 그대로 사용하는 변수
         input_data = InputData(
             age = input.age.data,
             gender = input.gender.data,
-            edu_yrs = input.edu_yrs.data,
+            edu_level = input.edu_level.data,
             has_db = input.has_db.data,
             has_hibpe = input.has_hibpe.data,
             has_mci = input.AD_MCI_status.data,
             base_yrs= input.base_yrs.data
         )
-        model_data = OutputData(
+        model_data = ModelDataForm(
             input_data,
             # 파생 변수
-            edu_level = input_data.edu_yrs.apply(lambda x: 0 if x <= 5 else 1 if x <= 8 else 2 if x <= 11 else 3 if x <= 13 else 4),
+            edu_yrs = input_data.edu_yrs.apply(lambda x: 0 if x == 0 else 6 if x == 1 else 9 if x == 2 else 12 if x == 3 else 14),
             db_onset_after = onset(input_data.has_db),
             mci_onset_after = onset(input_data.has_mci),
             hibpe_onset_after = onset(input_data.has_hibpe),
@@ -75,13 +107,13 @@ def prediction(model_data):
 
 @bp.route('/output/<int:inputData_id>', methods=['POST'])
 @login_required
-def create(input_id):
+def create_output(input_id):
     input_data = InputData.query.get_or_404(input_id)
     features = features(input_data.id)
-    result = predict(features)
+    result = prediction(features)
 
-    model_result = OutputData(
-        id = OutputData.id,
+    model_result = ModelDataForm(
+        id = ModelDataForm.id,
         input_id = input_id,
         date = datetime.now(),
         result = prediction(model_data)

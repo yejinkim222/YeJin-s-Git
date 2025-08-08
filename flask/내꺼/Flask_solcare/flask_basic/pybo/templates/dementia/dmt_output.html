@@ -16,7 +16,8 @@
 </head>
 
 <body>
-    <div id="header-placeholder"></div>
+    {% include "shared/header.html" %}
+<!--    <div id="header-placeholder"></div>-->
     <div id="container">
 
 
@@ -74,6 +75,7 @@
                 document.getElementById("footer-placeholder").innerHTML = data;
             });
     </script>
+    {% include "shared/footer.html" %}
 </body>
 
 </html>
