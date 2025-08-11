@@ -17,7 +17,7 @@ def create_input():
         input_data = InputData(
             age = form.age.data,
             gender = form.gender.data,
-            edu_yrs = form.edu_yrs.data,
+            edu_level = form.edu_level.data,
             has_db=form.has_db.data,
             has_hibpe = form.has_hibpe.data,
             has_mci = form.has_mci.data,
@@ -50,7 +50,7 @@ def generate_features(input_data: InputData):
 
 
     form = ModelDataForm()
-    model_data = ModelDataForm.query.get_or_404(input_id)
+    model_data = ModelDataForm.query.get_or_404(input_data)
 
 
     if form.validate_on_submit():
@@ -81,9 +81,9 @@ def generate_features(input_data: InputData):
             hibpe_onset_delay_ratio = (input_data.hibpe_onset_after / (input_data.age + 1e-3)),
             age_edu_ratio = (input_data.age / (input_data.edu_yrs + 1))
         )
-        return model_data
+        return redirect(url_for('mci_output', input_id=input_data.id))
 
-    return model_data
+    return render_template('mci/mci_form.html',form=form)
 
 def prediction(model_data):
     import joblib
@@ -91,13 +91,13 @@ def prediction(model_data):
     model_path = "C:/workspace/Project01/model_storage/xgb_best_model_final3.pkl"
     model = joblib.load(model_path)
 
-    feature = [
+    feature = {
         'age', 'gender', 'edu_yrs', 'has_db', 'ad_mci_status', 'has_hibpe', 'edu_level', 'db_onset_after',
         'hibpe_onset_after', 'mci_onset_after', 'age_group5', 'risk_factor_sum', 'edu_is_low', 'risk_weighted_age',
         'age_gender_interact', 'hibpe_onset_after_missing', 'has_hibpe_missing', 'mci_onset_after_missing',
         'edu_yrs_missing', 'db_onset_after_missing', 'cognitive_decline_flag', 'age_x_edu', 'hibpe_onset_delay_ratio',
         'age_edu_ratio'
-    ]
+    }
 
     model_list = (model_data for model_data.length in feature)
 

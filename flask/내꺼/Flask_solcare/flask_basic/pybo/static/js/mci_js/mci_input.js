@@ -3,17 +3,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // === 요소 캐싱 ===
   const age = document.getElementById("age");
-  const edu = document.getElementById("education");
-  const period = document.getElementById("period");
+  const edu = document.getElementById("edu_level");
+  const period = document.getElementById("base_yrs");
   const genderRadios = document.querySelectorAll("input[name='gender']");
-  const dbRadios = document.querySelectorAll("input[name='db']");
-  const hibpeRadios = document.querySelectorAll("input[name='hibpe']");
+  const dbRadios = document.querySelectorAll("input[name='has_db']");
+  const hibpeRadios = document.querySelectorAll("input[name='has_hibpe']");
   const cogRadios = document.querySelectorAll("input[name='cog_input_mode']");
-  const mciRadios = document.querySelectorAll("input[name='has_mci']");
+  const mciRadios = document.querySelectorAll("input[name='has_mci_ui']");
   const mmseInput = document.getElementById("mmse_score");
 
   const mciField = document.getElementById("mci_input_field");
   const mmseField = document.getElementById("mmse_input_field");
+
+  const hasMciField = document.getElementById("has_mci_hidden")
 
   // === 유틸: 라디오 선택값
   const checkedVal = nodes => {
@@ -30,26 +32,17 @@ document.addEventListener("DOMContentLoaded", () => {
   cogRadios.forEach(r => r.addEventListener("change", toggleCognitive));
   toggleCognitive(); // 초기 실행 1회
 
+  // MCI 라디오 변경 시 히든 필드 동기화
+  mciRadios.forEach(r=>{
+    r.addEventListener("change",()=>{
+      const v = checkedVal(mciRadios);
+      if (v!=null) hasMciField.value=v;
+    })
+  })
+
   // === 폼 제출 처리
   form.addEventListener("submit", e => {
     e.preventDefault();  // ✅ 반드시 제일 위에 와야 함
-
-    // === 입력 검증
-    if (!age.value.trim()) {
-      alert("나이를 입력해 주세요."); age.focus(); return;
-    }
-    if (!checkedVal(genderRadios)) {
-      alert("성별을 선택해 주세요."); return;
-    }
-    if (!edu.value) {
-      alert("교육 수준을 선택해 주세요."); edu.focus(); return;
-    }
-    if (!checkedVal(dbRadios)) {
-      alert("당뇨 여부를 선택해 주세요."); return;
-    }
-    if (!checkedVal(hibpeRadios)) {
-      alert("고혈압 여부를 선택해 주세요."); return;
-    }
 
     const mode = checkedVal(cogRadios);
     if (mode === "mci" && !checkedVal(mciRadios)) {
@@ -91,6 +84,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // === 페이지 이동
-    window.location.href = "mci_output.html";
+    //window.location.href = "mci_output.html";
+    form.submit()
   });
 });

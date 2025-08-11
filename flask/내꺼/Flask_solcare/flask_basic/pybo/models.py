@@ -11,13 +11,13 @@ class InputData(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'),nullable=False)  # 사용자 id 외부 키 사용, 유저 아직 없어서 null 가능하게 둠
 
     # 유저 테이블에서 해당 유저의 결과 전체 참조, 이 테이블에서 해당 유저 정보 참조 가능하게 연결
-    user = db.relationship('Users', backref=backref('dmt_outputs', lazy=True))
+    user = db.relationship('Users', backref=backref('dmt_inputs', lazy=True))
     input_date = db.Column(db.DateTime(), nullable=False)  # 날짜
 
     # 사용자 입력값 변수들
     age = db.Column(db.Integer, nullable=False)
     gender = db.Column(db.Integer, nullable=False)
-    edu_yrs = db.Column(db.Integer, nullable=False)
+    edu_level = db.Column(db.Integer, nullable=False)
     has_db = db.Column(db.Integer, nullable=False)
     has_hibpe = db.Column(db.Integer, nullable=False)
     # mci는 js에서 변환한 뒤 받아 오기
@@ -38,7 +38,7 @@ class OutputData(db.Model):
     # 사용자 입력 그대로 사용
     age = db.Column(db.Integer, nullable=False)
     gender = db.Column(db.Integer, nullable=False)
-    edu_yrs = db.Column(db.Integer, nullable=False)
+    edu_level = db.Column(db.Integer, nullable=False)
     has_db = db.Column(db.Integer, nullable=False)
     has_hibpe = db.Column(db.Integer, nullable=False)
     # mci는 js에서 변환한 뒤 받아 오기
@@ -46,7 +46,7 @@ class OutputData(db.Model):
     base_yrs = db.Column(db.Integer, nullable=False)
 
     # 파생 변수
-    edu_level = db.Column(db.Integer, nullable=False)
+    edu_yrs = db.Column(db.Integer, nullable=False)
     # onset 변수
     db_onset_after = db.Column(db.Integer, nullable=False)
     mci_onset_after = db.Column(db.Integer, nullable=False)
@@ -75,3 +75,7 @@ class Users(db.Model):
     username = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
+
+    # 양방향 cascade
+    inputs = db.relationship('InputData', back_populates='user', lazy=True, cascade='all, delete-orphan')
+    outputs = db.relationship('OutputData', back_populates='user', lazy=True, cascade='all, delete-orphan')

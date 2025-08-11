@@ -20,11 +20,11 @@
             <label for="edu_level">교육 수준</label>
             <select id="edu_level" name="edu_level">
                 <option value="">선택하세요</option>
-                <option value="0" {% if form.edu_yrs.data == 0  %}selected{% endif %}>무학(0~5년)</option>
-                <option value="1" {% if form.edu_yrs.data == 1  %}selected{% endif %}>초졸(6~8년)</option>
-                <option value="2" {% if form.edu_yrs.data == 2  %}selected{% endif %}>중졸(9~11년)</option>
-                <option value="3" {% if form.edu_yrs.data == 3  %}selected{% endif %}>고졸(12~13년)</option>
-                <option value="4" {% if form.edu_yrs.data == 4  %}selected{% endif %}>대졸 이상(14년 이상)</option>
+                <option value="0" {% if form.edu_level.data == 0  %}selected{% endif %}>무학(0~5년)</option>
+                <option value="1" {% if form.edu_level.data == 1  %}selected{% endif %}>초졸(6~8년)</option>
+                <option value="2" {% if form.edu_level.data == 2  %}selected{% endif %}>중졸(9~11년)</option>
+                <option value="3" {% if form.edu_level.data == 3  %}selected{% endif %}>고졸(12~13년)</option>
+                <option value="4" {% if form.edu_level.data == 4  %}selected{% endif %}>대졸 이상(14년 이상)</option>
             </select>
 
             <label>당뇨 여부</label>
@@ -73,22 +73,5 @@
             <button type="submit" class="predict-btn">예측 시작하기</button>
     </form>
     <a href="{{ url_for('main.index') }}" class="back-btn" style="display: block; text-align: center; margin-top: 30px;">◀ 돌아가기</a>
-
-    <script src="../static/js/mci_js/mci_input.js"></script>
-
-    <script>
-        fetch("../shared/header.html")
-            .then(res => res.text())
-            .then(data => {
-                document.getElementById("header-placeholder").innerHTML = data;
-            });
-    </script>
-    <script>
-        fetch("../shared/footer.html")
-            .then(res => res.text())
-            .then(data => {
-                document.getElementById("footer-placeholder").innerHTML = data;
-            });
-    </script>
 </div>
 {% endblock %}
