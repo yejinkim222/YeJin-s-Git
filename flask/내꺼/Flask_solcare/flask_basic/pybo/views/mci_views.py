@@ -1,10 +1,11 @@
 from datetime import datetime
 from flask import Blueprint, render_template, request, url_for, g, flash
+from werkzeug.utils import redirect
+
+from .. import db
 from pybo.models import InputData
 from .auth_views import login_required
-from ..forms import InputDataForm, ModelDataForm
-from werkzeug.utils import redirect
-from .. import db
+from ..forms import InputDataForm
 
 bp = Blueprint('mci', __name__, url_prefix='/mci')
 
@@ -20,7 +21,7 @@ def create_input():
             edu_level = form.edu_level.data,
             has_db=form.has_db.data,
             has_hibpe = form.has_hibpe.data,
-            has_mci = form.has_mci.data,
+            has_mci = int(form.has_mci.data) if form.has_mci.data not in (None, '') else 0,
             base_yrs = form.base_yrs.data,
             input_date = datetime.now(),
             user_id = g.user.id if g.user else None
@@ -29,7 +30,7 @@ def create_input():
         db.session.add(input_data)
         db.session.commit()
 
-        return redirect(url_for('mci.create_input', input_id=input_data.id))
+        return redirect(url_for('mci.mci_output', input_id=input_data.id))
 
     return render_template('mci/mci_form.html', form=form)
 
@@ -38,88 +39,80 @@ def create_input():
 
 
 # 파생 변수 생성
-def generate_features(input_data: InputData):
-    # 온셋시점 생성용
-    def onset(data):
-        return 0 if data else -1
+def generate_features(row: InputData):
 
-    # 람다함수만 따로
-    x = input_data.edu_yrs
-    edu_level = 0 if x <= 5 else 1 if x <= 8 else 2 if x <= 11 else 3 if x <= 13 else 4
-    risk_factor_sum = input_data.has_db + input_data.has_mci + input_data.has_hibpe
+    level_to_years = {0: 5, 1: 8, 2: 11, 3: 13, 4: 14}
+    edu_yrs = level_to_years.get(getattr(row, 'edu_level', 3), 12)
 
+    # 온셋 시점 생성용
+    def onset(data: int)->int:
+        return 0 if data == 1 else -1
 
-    form = ModelDataForm()
-    model_data = ModelDataForm.query.get_or_404(input_data)
+    risk_factor_sum = row.has_db + row.has_mci + row.has_hibpe
 
-
-    if form.validate_on_submit():
-        # 원본 입력값 그대로 사용하는 변수
-        input_data = InputData(
-            age = input.age.data,
-            gender = input.gender.data,
-            edu_level = input.edu_level.data,
-            has_db = input.has_db.data,
-            has_hibpe = input.has_hibpe.data,
-            has_mci = input.AD_MCI_status.data,
-            base_yrs= input.base_yrs.data
-        )
-        model_data = ModelDataForm(
-            input_data,
-            # 파생 변수
-            edu_yrs = input_data.edu_yrs.apply(lambda x: 0 if x == 0 else 6 if x == 1 else 9 if x == 2 else 12 if x == 3 else 14),
-            db_onset_after = onset(input_data.has_db),
-            mci_onset_after = onset(input_data.has_mci),
-            hibpe_onset_after = onset(input_data.has_hibpe),
-            age_group5 = (input_data.age//5).astype(int),
-            risk_factor_sum = input_data.has_db + input_data.has_mci + input_data.has_hibpe,
-            edu_is_low = input_data.edu_level.apply(lambda x: 1 if x == (0 or 1) else 0),
-            risk_weighted_age = input_data.age / (1 + input_data.risk_factor_sum),
-            age_gender_interact = (input_data.age * input_data.gender).astype(int),
-            cognitive_decline_flag = input_data.has_mci,
-            age_x_edu = (input_data.age * input_data.edu_yrs).astype(int),
-            hibpe_onset_delay_ratio = (input_data.hibpe_onset_after / (input_data.age + 1e-3)),
-            age_edu_ratio = (input_data.age / (input_data.edu_yrs + 1))
-        )
-        return redirect(url_for('mci_output', input_id=input_data.id))
-
-    return render_template('mci/mci_form.html',form=form)
-
-def prediction(model_data):
-    import joblib
-
-    model_path = "C:/workspace/Project01/model_storage/xgb_best_model_final3.pkl"
-    model = joblib.load(model_path)
-
-    feature = {
-        'age', 'gender', 'edu_yrs', 'has_db', 'ad_mci_status', 'has_hibpe', 'edu_level', 'db_onset_after',
-        'hibpe_onset_after', 'mci_onset_after', 'age_group5', 'risk_factor_sum', 'edu_is_low', 'risk_weighted_age',
-        'age_gender_interact', 'hibpe_onset_after_missing', 'has_hibpe_missing', 'mci_onset_after_missing',
-        'edu_yrs_missing', 'db_onset_after_missing', 'cognitive_decline_flag', 'age_x_edu', 'hibpe_onset_delay_ratio',
-        'age_edu_ratio'
+    feats = {
+        'age': row.age,
+        'gender': row.gender,
+        'edu_yrs': edu_yrs,
+        'has_db': row.has_db,
+        'ad_mci_status': row.has_mci,
+        'has_hibpe': row.has_hibpe,
+        'edu_level': getattr(row, 'edu_level', None),
+        'db_onset_after': onset(row.has_db),
+        'mci_onset_after': onset(row.has_mci),
+        'hibpe_onset_after': onset(row.has_hibpe),
+        'age_group5': row.age // 5,
+        'risk_factor_sum': risk_factor_sum,
+        'edu_is_low': 1 if row.edu_level in (0, 1) else 0,
+        'risk_weighted_age': row.age / (1 + risk_factor_sum),
+        'age_gender_interact': row.age * row.gender,
+        # 결측 마킹(없으면 0으로 두는 안전값)
+        'hibpe_onset_after_missing': 0,
+        'has_hibpe_missing': 0,
+        'mci_onset_after_missing': 0,
+        'edu_yrs_missing': 0,
+        'db_onset_after_missing': 0,
+        # 추가 파생
+        'cognitive_decline_flag': row.has_mci,
+        'age_x_edu': row.age * edu_yrs,
+        'hibpe_onset_delay_ratio': (onset(row.has_hibpe) / (row.age + 1e-3)),
+        'age_edu_ratio': (row.age / (edu_yrs + 1)),
+        # 필요시 base_yrs도 전달
+        'base_yrs': row.base_yrs,
     }
+    return feats
 
-    model_list = (model_data for model_data.length in feature)
 
-    result = model.predict(model_list)
+# 예측 함수(더미)
+def predict_one(feats: dict) -> float:
+    """
+    실제 사용 시:
+    import joblib, pandas as pd
+    model = joblib.load("C:/workspace/Project01/model_storage/xgb_best_model_final3.pkl")
+    columns = [
+        'age','gender','edu_yrs','has_db','ad_mci_status','has_hibpe','edu_level',
+        'db_onset_after','hibpe_onset_after','mci_onset_after','age_group5','risk_factor_sum',
+        'edu_is_low','risk_weighted_age','age_gender_interact','hibpe_onset_after_missing',
+        'has_hibpe_missing','mci_onset_after_missing','edu_yrs_missing','db_onset_after_missing',
+        'cognitive_decline_flag','age_x_edu','hibpe_onset_delay_ratio','age_edu_ratio'
+    ]
+    X = pd.DataFrame([feats], columns=columns)  # 학습시 컬럼 순서와 동일해야 함
+    yhat = float(model.predict(X)[0])
+    return yhat
+    """
+    return 0.0  # 우선 0.0 반환(모델 연결 전)
 
-    return result
+@bp.route('/output/<int:input_id>/', methods=['GET'])
+# @login_required
+def output(input_id):
 
-@bp.route('/output/<int:inputData_id>', methods=['POST'])
-@login_required
-def create_output(input_id):
-    input_data = InputData.query.get_or_404(input_id)
-    features = features(input_data.id)
-    result = prediction(features)
+    row = InputData.query.get_or_404(input_id)
 
-    model_result = ModelDataForm(
-        id = ModelDataForm.id,
-        input_id = input_id,
-        date = datetime.now(),
-        result = prediction(model_data)
-    )
+    feats = generate_features(row)
+    yhat = predict_one(feats)  # 모델 연결 전이면 0.0
 
-    db.session.add(model_data)
-    db.session.commit()
-
-    return model_result.id
+    # 템플릿에서 input_data, features, yhat 사용
+    return render_template('mci/mci_output.html',
+                           input_data=row,
+                           features=feats,
+                           yhat=yhat)
