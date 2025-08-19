@@ -1,24 +1,29 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <title>Hello, pybo!</title>
+    <title>SolCare</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}" />
 </head>
+
 <body>
-{% include "navbar.html" %}
+    {% include "shared/header.html" %}
 
-{% block content %}
-{% endblock %}
+    <main>
 
-{% block script %}
-{% endblock %}
+        {% block content %}
 
-<script src="{{ url_for('static', filename='jquery-3.7.1.min.js') }}"></script>
-<script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
+        {% endblock %}
 
+    </main>
+
+    <script src="{{ url_for('static', filename='js/slider.js') }}"></script>
+    {% include "shared/footer.html" %}
 </body>
+
 </html>
+

@@ -1,72 +1,43 @@
+<!-- templates/auth/signup.html -->
 <!DOCTYPE html>
 <html lang="ko">
-    <head>
-        <meta charset="UTF-8">
-        <title>로그인/회원가입 페이지</title>
-        <link rel="stylesheet" href="/static/css/style.css">
-        <link rel="stylesheet" href="/static/css/auth/auth.css">
-        <link href="https://fonts.googleapis.com/css2?family=Spoqa+Han+Sans&display=swap" rel="stylesheet">
-    </head>
-    <body>
-        {% include "shared/header.html" %}
-        <div id="container">
-            <div class="signup">
-                <h1>회원 가입</h1>
-                <form>
-                    <fieldset>
-                        <legend>사용자 정보</legend>
-                        <ul>
-                            <li>
-                                <label for="uname">이름</label>
-                                <input type="text" id="uname"  required>
-                            </li>
-                            <li>
-                                <label for="gender">성별</label>
-                                <div class="radio-group">
-                                    <label><input type="radio" name="gender" value="male" /> 남성</label>
-                                    <label><input type="radio" name="gender" value="female" /> 여성</label>
-                                </div>
-                            </li>
-                            <li>
-                                <label for="uid">아이디</label>
-                                <input type="text" id="uid" autofocus placeholder="4~10자 사이, 공백없이" required>
-                            </li>
-                            <li>
-                                <label for="umail">이메일</label>
-                                <input type="email" id="umail" required>
-                            </li>
-                            <li>
-                                <label for="pwd1">비밀번호</label>
-                                <input type="password" id="pwd1" placeholder="문자와 숫자, 특수 기호 포함" required>
-                            </li>
-                            <li>
-                                <label for="pwd2">비밀번호 확인</label>
-                                <input type="password" id="pwd2" required>
-                            </li>
-                        </ul>
-                    </fieldset>
-                    <div id="buttons">
-                        <input type="submit" value="가입하기">
-                        <input type="reset" value="취소">
-                    </div>
-                </form>
-            </div>
+<head>
+  <meta charset="UTF-8">
+  <title>회원가입</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/auth/auth.css">
+  <link href="https://fonts.googleapis.com/css2?family=Spoqa+Han+Sans&display=swap" rel="stylesheet">
+</head>
+<body>
+  {% include "shared/header.html" %}
+
+  <div id="container">
+    <div class="signup">
+      <h1>회원 가입</h1>
+
+      {% include "form_errors.html" %}
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <div class="flash">{{ messages[0] }}</div>
+        {% endif %}
+      {% endwith %}
+
+      <form method="post" action="{{ url_for('auth.signup') }}">
+        {{ form.csrf_token }}
+
+        {{ form.username(placeholder='사용자이름(3~25자)') }}
+        {{ form.email(placeholder='이메일') }}
+        {{ form.password1(placeholder='비밀번호') }}
+        {{ form.password2(placeholder='비밀번호 확인') }}
+
+        <div id="buttons">
+          <button type="submit">가입하기</button>
+          <button type="reset">취소</button>
         </div>
-        <div id="footer-placeholder"></div>
-        <script>
-            fetch("../shared/header.html")
-                .then(res => res.text())
-                .then(data => {
-                    document.getElementById("header-placeholder").innerHTML = data;
-                });
-        </script>
-        <script>
-            fetch("../shared/footer.html")
-                .then(res => res.text())
-                .then(data => {
-                    document.getElementById("footer-placeholder").innerHTML = data;
-                });
-        </script>
-        {% include "shared/footer.html" %}
-    </body>
+      </form>
+    </div>
+  </div>
+
+  {% include "shared/footer.html" %}
+</body>
 </html>

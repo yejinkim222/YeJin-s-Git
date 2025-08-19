@@ -3,7 +3,7 @@ from wsgiref.validate import validator
 
 from flask_wtf import FlaskForm
 from wtforms.fields.simple import StringField, TextAreaField, PasswordField
-from wtforms.validators import DataRequired, Length, EqualTo, Email, NumberRange, InputRequired
+from wtforms.validators import DataRequired, Length, EqualTo, Email, NumberRange, InputRequired, Optional
 from wtforms import IntegerField, RadioField, SelectField, HiddenField
 
 
@@ -12,11 +12,10 @@ class InputDataForm(FlaskForm):
     age = IntegerField('Age', validators=[DataRequired('나이는 필수 입력 항목입니다. 65~120의 값으로 입력해주세요.'), NumberRange(min=65, max=120)])
     gender = RadioField('Gender', choices=[('0','남성'),('1','여성')], coerce=int, validators=[InputRequired('성별은 필수 입력 항목입니다.')])
     edu_level = SelectField('Edu_level', choices=[('0','무학'),('1','초졸'),('2','중졸'),('3','고졸'),('4','대졸 이상')], coerce=int, validators=[InputRequired('교육 수준은 필수 입력 항목입니다.')])
-    has_db = RadioField('Has_db',choices=[('0','없음'),('1','있음')], coerce=int, validators=[DataRequired('당뇨병 여부는 필수 입력 항목입니다.')])
-    has_hibpe = RadioField('Has_hibpe',choices=[('0','없음'),('1','있음')], coerce=int, validators=[DataRequired('고혈압 여부는 필수 입력 항목입니다.')])
-    has_mci = HiddenField('Has_mci', validators=[DataRequired('경도 인지 장애 여부는 필수 입력 항목입니다. 둘 중 하나를 선택하여 입력해주세요.')])
+    has_db = RadioField('Has_db',choices=[('0','없음'),('1','있음')], coerce=int, validators=[InputRequired('당뇨병 여부는 필수 입력 항목입니다.')])
+    has_hibpe = RadioField('Has_hibpe',choices=[('0','없음'),('1','있음')], coerce=int, validators=[InputRequired('고혈압 여부는 필수 입력 항목입니다.')])
+    has_mci = HiddenField('Has_mci', validators=[Optional()])
     base_yrs = IntegerField('Base_yrs', validators=[DataRequired('예측 기준 연도는 필수 입력 항목입니다. 1~10의 값으로 입력해주세요.'), NumberRange(min=1, max=10)])
-    # 파생 변수는?
 
 class ModelDataForm(FlaskForm):
     id = StringField('Id', validators = [DataRequired()])

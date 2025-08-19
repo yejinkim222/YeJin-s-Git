@@ -1,128 +1,167 @@
-<!DOCTYPE html>
-<html lang="ko">
+{% extends 'base.html' %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SolCare - 질병 정보</title>
-    <link rel="stylesheet" href="../static/css/style.css" />
+{% block content %}
 
+<!-- 페이지 전용 최소 스타일 (필요시 disease.css로 옮겨도 됩니다) -->
+<style>
+  :root { --header-h: 60px; --sidebar-w: 240px; }
 
-</head>
+  .disease-wrapper{
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 16px 20px;
+    display: grid;
+    grid-template-columns: var(--sidebar-w) 1fr;
+    gap: 24px;
+    min-height: calc(100vh - var(--header-h));
+  }
 
-<body>
-    {% include "shared/header.html" %}
-<!--    <div id="header-placeholder"></div>-->
+  /* 왼쪽 네비 패널 */
+  .disease-sidebar{
+    position: sticky;
+    top: var(--header-h);
+    align-self: start;
+    height: calc(100vh - var(--header-h));
+    overflow: auto;
+    background: #fff;
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 0 10px rgba(0,0,0,.08);
+  }
+  .disease-sidebar h3{ margin: 8px 0 6px; color:#014c40; }
+  .disease-sidebar ul{ list-style:none; padding:0; margin:0 0 12px; }
+  .disease-sidebar li{
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    color:#014c40;
+  }
+  .disease-sidebar li:hover{ background:#e6f2ef; }
+  .disease-sidebar li.active,
+  .disease-sidebar li[aria-current="true"]{
+    background:#0f8d7a; color:#fff;
+  }
+  .disease-sidebar .back-btn{
+    display:block; margin-top:12px; text-decoration:none; font-weight:700; color:#6a1b9a;
+  }
 
-    <section class="disease-wrapper">
-        <nav class="sidebar disease-sidebar">
-            <h3>치매</h3>
-            <ul>
-                <li data-target="dementia-what">치매란?</li>
-                <li data-target="dementia-test">자가진단</li>
-                <li data-target="dementia-symptoms">증상</li>
-            </ul>
-            <h3>경도 인지 장애 (MCI)</h3>
-            <ul>
-                <li data-target="mci-what">경도인지장애(MCI)란?</li>
-                <li data-target="mci-test">경도 인지 장애 자가진단</li>
-                <li data-target="mci-symptoms">경도 인지 장애 증상</li>
-            </ul>
-            <a href="index.html" class="back-btn">◀ 돌아가기</a>
-        </nav>
+  /* 본문 */
+  .content{
+    background:#fff;
+    border-radius:10px;
+    padding:24px 28px;
+    box-shadow:0 0 10px rgba(0,0,0,.08);
+    min-height: calc(100vh - var(--header-h));
+  }
+  /* 헤더에 가리지 않도록 오프셋 */
+  .content section{ scroll-margin-top: calc(var(--header-h) + 12px); }
 
-        <main class="content">
-            <section id="dementia-what">
-                <h2 class="icon-title">질병 정보 - 치매</h2>
-                <h3 class="icon-title">치매란?</h3>
-                <p>치매는 단일 질환이 아니라, 기억력, 사고력, 의사 결정 능력 등에 영향을 주어 일상 생활을 어렵게 만드는 여러 뇌 질환의 총칭입니다.</p>
-                <p>노년층에서 흔하지만, 노화의 정상적인 부분은 아닙니다.</p>
-                <p>시간이 지남에 따라 점진적으로 악화되며, 가장 흔한 형태는 알츠하이머병입니다.</p>
-                <p>출처: <a href="https://www.who.int/news-room/fact-sheets/detail/dementia">보건 기구(WHO) 치매 정보 페이지</a></p>
-            </section>
-            <section id="dementia-test">
-                <h3 class="icon-title">치매 자가진단</h3>
-                <p>8문항 치매 선별 질문인 AD8은 Washington University 치매 연구 센터에서 개발한 8문항 설문지입니다.</p>
-                <p>기억, 방향 감각, 판단력, 일상 생활 기능의 변화를 간단히 점검 가능합니다.</p>
-                <p>응답자는 "예/아니오"로 체크하며, "예" 항목이 2개 이상이면 인지 저하를 의심해 보아야 합니다.</p>
-                <br>
-                <p>PDF 다운로드:
-                    <a href="#">
-                        AD8 Dementia Screening Interview (Knight ADRC)
-                    </a>
-                </p>
-                <br>
-                <p>이 선별 검사는 정식 진단이 아닙니다.</p>
-                <p>2점 이상인 경우, 전문의 상담 및 정밀 검사가 필요합니다.</p>
-            </section>
-            <section id="dementia-symptoms">
-                <h3 class="icon-title">치매의 증상</h3>
-                <p>CDC에서 밝힌 치매의 대표 증상은 다음과 같습니다.</p>
-                <p>기억력 저하: 최근 사건 기억이 어려움</p>
-                <p>주의력 감소: 주의 집중 저하</p>
-                <p>언어 능력 저하: 언어 및 의사소통의 문제(단어 찾기에 어려움)</p>
-                <p>판단력/추리력 저하</p>
-                <p>시/공간 기능 문제: 시각/공간 인식 문제(거리, 깊이 감각 저하)</p>
-                <p>행동 및 정서 변화: 감정 조절 어려움, 성격 변화</p>
-            </section>
-            <section id="mci-what">
-                <h2 class="icon-title">질병 정보 - 경도 인지 장애</h2>
-                <h3 class="icon-title">경도 인지 장애(MCI)란?</h3>
-                <p>정상 노화와 치매의 중간 단계로 볼 수 있습니다.</p>
-                <p>Mild Cognitive Impairment의 약자로, MCI로도 불립니다.</p>
-                <p>정상 노화 범위를 넘지만, 치매 진단 기준에는 미치지 못하는 인지 저하 상태를 말합니다.</p>
-                <p>기억력, 언어, 판단력 등의 특정 인지 기능의 저하가 있으나 일상생활은 유지되는 상태입니다.</p>
-                <p>경도 인지 장애(MCI)는 치매로 진행될 위험이 높습니다.</p>
-                <p>조기에 발견하여 적절한 치료와 관리를 하면 진행을 늦추거나 예방할 수 있습니다.</p>
-                <p>출처:
-                    <a
-                        href="https://www.mayoclinic.org/diseases-conditions/mild-cognitive-impairment/symptoms-causes/syc-20354578">
-                        Mayo Clinic - Mild Cognitive Impairment(MCI)
-                    </a>
-                </p>
-            </section>
-            <section id="mci-test">
-                <h3 class="icon-title">경도 인지 장애 자가진단</h3>
-                <p>Mini-Cog™(미니 코드 인지 검사)는 빠르고 간단한 인지 선별 검사 도구입니다.</p>
-                <p>기억점수(0~3점), 시계 그리기 점수(0~2점)를 합산하여, 총점이 3점 미만의 경우 MCi로 의심됩니다.</p>
-                <p>자세한 설명:
-                    <a
-                        href="https://www.nia.nih.gov/health/health-care-professionals-information/alzheimers-and-related-dementias-resources">
-                        Mini‑Cog™ Screening Tool – Alzheimer’s Association
-                    </a>
-                </p>
-                <br>
-                <p>이 인지 검사는 정확한 진단이 아닙니다.</p>
-                <p>3점 미만의 경우 정밀 검사를 권장합니다.</p>
-            </section>
-            <section id="mci-symptoms">
-                <h3 class="icon-title">경도 인지 장애 증상</h3>
-                <p>Mayo Clinic에서 밝힌 MCI의 대표 증상은 다음과 같습니다.</p>
-                <p>기억력 저하: 물건을 자주 잊거나 예약을 놓침</p>
-                <p>언어 사용 어려움: 대화를 따라가기 힘듦</p>
-                <p>판단력/의사 결정 능력 저하: 계획, 일상 작업의 수행에 어려움</p>
-                <p>방향 감각 및 시공간 인지 문제: 길 찾기나 공간 인식 문제</p>
-                <p>집중력 저하, 생각 흐름 중단: 생각의 흐름이 자주 끊기고 집중력이 부족함</p>
-                <p>가족/주변인도 인지할 정도 변화</p>
-            </section>
+  .icon-title{ margin-top: 8px; }
 
-        </main>
-        <script>
-            fetch("../templates/shared/header.html")
-                .then(res => res.text())
-                .then(data => {
-                    document.getElementById("header-placeholder").innerHTML = data;
-                });
-        </script>
-        <script>
-            fetch("../templates/shared/footer.html")
-                .then(res => res.text())
-                .then(data => {
-                    document.getElementById("footer-placeholder").innerHTML = data;
-                });
-        </script>
+  @media (max-width: 900px){
+    .disease-wrapper{ grid-template-columns: 1fr; }
+    .disease-sidebar{
+      position: static; height:auto; display:flex; flex-wrap:wrap; gap:8px;
+    }
+    .disease-sidebar ul{ display:flex; gap:6px; flex-wrap:wrap; }
+    .disease-sidebar li{ padding:8px 10px; }
+  }
+</style>
+
+<section class="disease-wrapper">
+  <nav class="sidebar disease-sidebar">
+    <h3>치매</h3>
+    <ul>
+      <li data-target="dementia-what">치매란?</li>
+      <li data-target="dementia-test">자가진단</li>
+      <li data-target="dementia-symptoms">증상</li>
+    </ul>
+    <h3>경도 인지 장애 (MCI)</h3>
+    <ul>
+      <li data-target="mci-what">경도인지장애(MCI)란?</li>
+      <li data-target="mci-test">경도 인지 장애 자가진단</li>
+      <li data-target="mci-symptoms">경도 인지 장애 증상</li>
+    </ul>
+    <a href="{{ url_for('main.index') }}" class="back-btn">◀ 돌아가기</a>
+  </nav>
+
+  <main class="content">
+    <section id="dementia-what">
+      <h2 class="icon-title">질병 정보 - 치매</h2>
+      <h3 class="icon-title">치매란?</h3>
+      <p>치매는 단일 질환이 아니라, 기억력, 사고력, 의사 결정 능력 등에 영향을 주어 일상 생활을 어렵게 만드는 여러 뇌 질환의 총칭입니다.</p>
+      <p>노년층에서 흔하지만, 노화의 정상적인 부분은 아닙니다.</p>
+      <p>시간이 지남에 따라 점진적으로 악화되며, 가장 흔한 형태는 알츠하이머병입니다.</p>
+      <p>출처: <a href="https://www.who.int/news-room/fact-sheets/detail/dementia" target="_blank" rel="noopener">보건 기구(WHO) 치매 정보 페이지</a></p>
     </section>
-    {% include "shared/footer.html" %}
-</body>
 
-</html>
+    <section id="dementia-test">
+      <h3 class="icon-title">치매 자가진단</h3>
+      <p>8문항 치매 선별 질문인 AD8은 Washington University 치매 연구 센터에서 개발한 8문항 설문지입니다.</p>
+      <p>기억, 방향 감각, 판단력, 일상 생활 기능의 변화를 간단히 점검 가능합니다.</p>
+      <p>응답자는 "예/아니오"로 체크하며, "예" 항목이 2개 이상이면 인지 저하를 의심해 보아야 합니다.</p>
+      <br>
+      <p>PDF 다운로드:
+        <a href="#" target="_blank" rel="noopener">
+          AD8 Dementia Screening Interview (Knight ADRC)
+        </a>
+      </p>
+      <br>
+      <p>이 선별 검사는 정식 진단이 아닙니다.</p>
+      <p>2점 이상인 경우, 전문의 상담 및 정밀 검사가 필요합니다.</p>
+    </section>
+
+    <section id="dementia-symptoms">
+      <h3 class="icon-title">치매의 증상</h3>
+      <p>CDC에서 밝힌 치매의 대표 증상은 다음과 같습니다.</p>
+      <p>기억력 저하: 최근 사건 기억이 어려움</p>
+      <p>주의력 감소: 주의 집중 저하</p>
+      <p>언어 능력 저하: 언어 및 의사소통의 문제(단어 찾기에 어려움)</p>
+      <p>판단력/추리력 저하</p>
+      <p>시/공간 기능 문제: 시각/공간 인식 문제(거리, 깊이 감각 저하)</p>
+      <p>행동 및 정서 변화: 감정 조절 어려움, 성격 변화</p>
+    </section>
+
+    <section id="mci-what">
+      <h2 class="icon-title">질병 정보 - 경도 인지 장애</h2>
+      <h3 class="icon-title">경도 인지 장애(MCI)란?</h3>
+      <p>정상 노화와 치매의 중간 단계로 볼 수 있습니다.</p>
+      <p>Mild Cognitive Impairment의 약자로, MCI로도 불립니다.</p>
+      <p>정상 노화 범위를 넘지만, 치매 진단 기준에는 미치지 못하는 인지 저하 상태를 말합니다.</p>
+      <p>기억력, 언어, 판단력 등의 특정 인지 기능의 저하가 있으나 일상생활은 유지되는 상태입니다.</p>
+      <p>경도 인지 장애(MCI)는 치매로 진행될 위험이 높습니다.</p>
+      <p>조기에 발견하여 적절한 치료와 관리를 하면 진행을 늦추거나 예방할 수 있습니다.</p>
+      <p>출처:
+        <a href="https://www.mayoclinic.org/diseases-conditions/mild-cognitive-impairment/symptoms-causes/syc-20354578"
+           target="_blank" rel="noopener">Mayo Clinic - Mild Cognitive Impairment(MCI)</a>
+      </p>
+    </section>
+
+    <section id="mci-test">
+      <h3 class="icon-title">경도 인지 장애 자가진단</h3>
+      <p>Mini-Cog™(미니 코드 인지 검사)는 빠르고 간단한 인지 선별 검사 도구입니다.</p>
+      <p>기억점수(0~3점), 시계 그리기 점수(0~2점)를 합산하여, 총점이 3점 미만의 경우 MCi로 의심됩니다.</p>
+      <p>자세한 설명:
+        <a href="https://www.nia.nih.gov/health/health-care-professionals-information/alzheimers-and-related-dementias-resources"
+           target="_blank" rel="noopener">Mini-Cog™ Screening Tool – Alzheimer’s Association</a>
+      </p>
+      <br>
+      <p>이 인지 검사는 정확한 진단이 아닙니다.</p>
+      <p>3점 미만의 경우 정밀 검사를 권장합니다.</p>
+    </section>
+
+    <section id="mci-symptoms">
+      <h3 class="icon-title">경도 인지 장애 증상</h3>
+      <p>Mayo Clinic에서 밝힌 MCI의 대표 증상은 다음과 같습니다.</p>
+      <p>기억력 저하: 물건을 자주 잊거나 예약을 놓침</p>
+      <p>언어 사용 어려움: 대화를 따라가기 힘듦</p>
+      <p>판단력/의사 결정 능력 저하: 계획, 일상 작업의 수행에 어려움</p>
+      <p>방향 감각 및 시공간 인지 문제: 길 찾기나 공간 인식 문제</p>
+      <p>집중력 저하, 생각 흐름 중단: 생각의 흐름이 자주 끊기고 집중력이 부족함</p>
+      <p>가족/주변인도 인지할 정도 변화</p>
+    </section>
+  </main>
+</section>
+
+{% endblock %}

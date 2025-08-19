@@ -5,7 +5,7 @@ bp = Blueprint('main', __name__, url_prefix='/')
 
 @bp.route('/')
 def index():
-    return redirect(url_for('auth.login'))
+    return render_template('index.html')
 
 @bp.route('/disease')
 def disease():

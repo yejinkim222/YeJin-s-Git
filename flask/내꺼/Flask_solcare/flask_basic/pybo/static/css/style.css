@@ -52,6 +52,12 @@ header {
   color: #ffffff;
   cursor: pointer;
 }
+.user-greeting {
+  margin-left: 10px;
+  font-size: 0.9rem;
+  color: #999;
+}
+
 nav {
   display: flex;
   justify-content: flex-end;

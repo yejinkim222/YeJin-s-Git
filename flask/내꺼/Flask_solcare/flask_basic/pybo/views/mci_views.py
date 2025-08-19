@@ -1,4 +1,10 @@
 from datetime import datetime
+from functools import lru_cache
+from pathlib import Path
+
+import joblib
+import numpy as np
+import pandas as pd
 from flask import Blueprint, render_template, request, url_for, g, flash
 from werkzeug.utils import redirect
 
@@ -8,6 +14,40 @@ from .auth_views import login_required
 from ..forms import InputDataForm
 
 bp = Blueprint('mci', __name__, url_prefix='/mci')
+
+
+
+# 모델 경로 불러오기
+MODEL_PATH = Path("C:/workspace/Project01/model_storage/xgb_best_model_final3.pkl")
+# 모델 학습 시 사용한 컬럼명 순서대로 고정
+MODEL_COLUMNS = [
+    'age','gender','edu_yrs','has_db','ad_mci_status','has_hibpe','edu_level',
+    'db_onset_after','hibpe_onset_after','mci_onset_after','age_group5','risk_factor_sum',
+    'edu_is_low','risk_weighted_age','age_gender_interact',
+    'hibpe_onset_after_missing','has_hibpe_missing','mci_onset_after_missing',
+    'edu_yrs_missing','db_onset_after_missing','cognitive_decline_flag',
+    'age_x_edu','hibpe_onset_delay_ratio','age_edu_ratio'
+]
+INT_COLS = [
+    'age','gender','edu_yrs','has_db','ad_mci_status','has_hibpe','edu_level',
+    'db_onset_after','mci_onset_after','hibpe_onset_after','age_group5','risk_factor_sum',
+    'edu_is_low','age_gender_interact','hibpe_onset_after_missing','has_hibpe_missing',
+    'mci_onset_after_missing','edu_yrs_missing','db_onset_after_missing',
+    'cognitive_decline_flag','age_x_edu'
+]
+FLOAT_COLS = ['risk_weighted_age','hibpe_onset_delay_ratio','age_edu_ratio']
+
+
+
+# 모델 1회 가져오기
+@lru_cache(maxsize=1)
+def get_model():
+    if not MODEL_PATH.exists():
+        # 운영 시엔 config에서 경로 주입 권장: current_app.config['MODEL_PATH']
+        raise FileNotFoundError(f"모델 파일이 없습니다: {MODEL_PATH}")
+    return joblib.load(MODEL_PATH)
+
+
 
 @bp.route('/input/', methods=['GET', 'POST'])
 # @login_required
@@ -30,11 +70,9 @@ def create_input():
         db.session.add(input_data)
         db.session.commit()
 
-        return redirect(url_for('mci.mci_output', input_id=input_data.id))
+        return redirect(url_for('mci.output', input_id=input_data.id))
 
     return render_template('mci/mci_form.html', form=form)
-
-
 
 
 
@@ -76,31 +114,36 @@ def generate_features(row: InputData):
         'cognitive_decline_flag': row.has_mci,
         'age_x_edu': row.age * edu_yrs,
         'hibpe_onset_delay_ratio': (onset(row.has_hibpe) / (row.age + 1e-3)),
-        'age_edu_ratio': (row.age / (edu_yrs + 1)),
-        # 필요시 base_yrs도 전달
-        'base_yrs': row.base_yrs,
+        'age_edu_ratio': (row.age / (edu_yrs + 1))
     }
     return feats
 
 
+
+
+
+
 # 예측 함수(더미)
 def predict_one(feats: dict) -> float:
-    """
-    실제 사용 시:
-    import joblib, pandas as pd
-    model = joblib.load("C:/workspace/Project01/model_storage/xgb_best_model_final3.pkl")
-    columns = [
-        'age','gender','edu_yrs','has_db','ad_mci_status','has_hibpe','edu_level',
-        'db_onset_after','hibpe_onset_after','mci_onset_after','age_group5','risk_factor_sum',
-        'edu_is_low','risk_weighted_age','age_gender_interact','hibpe_onset_after_missing',
-        'has_hibpe_missing','mci_onset_after_missing','edu_yrs_missing','db_onset_after_missing',
-        'cognitive_decline_flag','age_x_edu','hibpe_onset_delay_ratio','age_edu_ratio'
-    ]
-    X = pd.DataFrame([feats], columns=columns)  # 학습시 컬럼 순서와 동일해야 함
-    yhat = float(model.predict(X)[0])
-    return yhat
-    """
-    return 0.0  # 우선 0.0 반환(모델 연결 전)
+
+    model = get_model()
+
+    # df 생성, 컬럼 순서 명시
+    X = pd.DataFrame([feats], columns=MODEL_COLUMNS)
+
+    # dtype 맞추기
+    X[INT_COLS] = X[INT_COLS].astype(np.int64)
+    X[FLOAT_COLS] = X[FLOAT_COLS].astype(np.float32)
+
+    # 확률 예측 가능하면 사용하기
+    if hasattr(model, "predict_proba"):
+        proba = model.predict_proba(X)[:,1]
+        return float(proba[0])
+
+    yhat = model.predict(X)
+    return float(yhat[0])
+
+
 
 @bp.route('/output/<int:input_id>/', methods=['GET'])
 # @login_required
@@ -108,7 +151,10 @@ def output(input_id):
 
     row = InputData.query.get_or_404(input_id)
 
+
     feats = generate_features(row)
+
+
     yhat = predict_one(feats)  # 모델 연결 전이면 0.0
 
     # 템플릿에서 input_data, features, yhat 사용

@@ -1,37 +1,39 @@
+<!-- templates/auth/login.html -->
 <!DOCTYPE html>
 <html lang="ko">
-
 <head>
-    <meta charset="UTF-8">
-    <title>로그인 페이지</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-    <link rel="stylesheet" href="/static/css/auth/auth.css">
-    <link href="https://fonts.googleapis.com/css2?family=Spoqa+Han+Sans&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <title>로그인 페이지</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/auth/auth.css">
+  <link href="https://fonts.googleapis.com/css2?family=Spoqa+Han+Sans&display=swap" rel="stylesheet">
 </head>
-
 <body>
-    {% include "shared/header.html" %}
-    <div id="container">
-        <div class="login">
-            <h2>로그인</h2>
-            <form>
-                <input type="text" placeholder="아이디" required />
-                <input type="password" placeholder="비밀번호" required />
-                <button type="submit" class="login-btn">로그인</button>
-                <a href="{{ url_for('auth.signup' )}}" class="signup-btn">회원가입</a>
-            </form>
-        </div>
-<!--        <div id="footer-placeholder"></div>-->
+  {% include "shared/header.html" %}
 
-        <script>
-            fetch("../shared/header.html")
-                .then(res => res.text())
-                .then(data => {
-                    document.getElementById("header-placeholder").innerHTML = data;
-                });
-        </script>
+  <div id="container">
+    <div class="login">
+      <h2>로그인</h2>
+
+      <!-- 플래시/폼 에러 표시(선택) -->
+      {% include "form_errors.html" %}
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <div class="flash">{{ messages[0] }}</div>
+        {% endif %}
+      {% endwith %}
+
+      <form method="post" action="{{ url_for('auth.login') }}">
+        {{ form.csrf_token }}  <!-- CSRF 필수 -->
+        {{ form.username(size=32, placeholder='아이디', autocomplete='username') }}
+        {{ form.password(placeholder='비밀번호', autocomplete='current-password') }}
+        <button type="submit" class="login-btn">로그인</button>
+        <a href="{{ url_for('auth.signup') }}" class="signup-btn">회원가입</a>
+      </form>
     </div>
-    {% include "shared/footer.html" %}
-</body>
+  </div>
 
+  {% include "shared/footer.html" %}
+
+</body>
 </html>

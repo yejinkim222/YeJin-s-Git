@@ -34,24 +34,16 @@
 		<div class="notice-box">
 			⚠️ 본 결과는 모델 예측을 기반으로 생성한 임의의 시각 자료로 실제 발병 시점과 차이가 있을 수 있습니다.
 		</div>
+
+		<div id="predict-data"
+    		data-yhat="{{ (yhat|default('')) }}"
+    		data-base-yrs="{{ (input_data.base_yrs|default('')) }}">
+		</div>
 	</div>
 	<div id="footer-placeholder"></div>
 	<script src="/static/js/mci_js/mci_output.js"></script>
 
-    <script>
-        fetch("../shared/header.html")
-            .then(res => res.text())
-            .then(data => {
-                document.getElementById("header-placeholder").innerHTML = data;
-            });
-    </script>
-    <script>
-        fetch("../shared/footer.html")
-            .then(res => res.text())
-            .then(data => {
-                document.getElementById("footer-placeholder").innerHTML = data;
-            });
-    </script>
+
 	{% include "shared/footer.html" %}
 </body>
 
