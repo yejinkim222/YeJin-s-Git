@@ -1,74 +1,8 @@
 {% extends 'base.html' %}
 
+<link rel="stylesheet" href="{{ url_for('static', filename='css/disease.css') }}">
+
 {% block content %}
-
-<!-- 페이지 전용 최소 스타일 (필요시 disease.css로 옮겨도 됩니다) -->
-<style>
-  :root { --header-h: 60px; --sidebar-w: 240px; }
-
-  .disease-wrapper{
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 16px 20px;
-    display: grid;
-    grid-template-columns: var(--sidebar-w) 1fr;
-    gap: 24px;
-    min-height: calc(100vh - var(--header-h));
-  }
-
-  /* 왼쪽 네비 패널 */
-  .disease-sidebar{
-    position: sticky;
-    top: var(--header-h);
-    align-self: start;
-    height: calc(100vh - var(--header-h));
-    overflow: auto;
-    background: #fff;
-    border-radius: 10px;
-    padding: 16px;
-    box-shadow: 0 0 10px rgba(0,0,0,.08);
-  }
-  .disease-sidebar h3{ margin: 8px 0 6px; color:#014c40; }
-  .disease-sidebar ul{ list-style:none; padding:0; margin:0 0 12px; }
-  .disease-sidebar li{
-    padding: 10px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    color:#014c40;
-  }
-  .disease-sidebar li:hover{ background:#e6f2ef; }
-  .disease-sidebar li.active,
-  .disease-sidebar li[aria-current="true"]{
-    background:#0f8d7a; color:#fff;
-  }
-  .disease-sidebar .back-btn{
-    display:block; margin-top:12px; text-decoration:none; font-weight:700; color:#6a1b9a;
-  }
-
-  /* 본문 */
-  .content{
-    background:#fff;
-    border-radius:10px;
-    padding:24px 28px;
-    box-shadow:0 0 10px rgba(0,0,0,.08);
-    min-height: calc(100vh - var(--header-h));
-  }
-  /* 헤더에 가리지 않도록 오프셋 */
-  .content section{ scroll-margin-top: calc(var(--header-h) + 12px); }
-
-  .icon-title{ margin-top: 8px; }
-
-  @media (max-width: 900px){
-    .disease-wrapper{ grid-template-columns: 1fr; }
-    .disease-sidebar{
-      position: static; height:auto; display:flex; flex-wrap:wrap; gap:8px;
-    }
-    .disease-sidebar ul{ display:flex; gap:6px; flex-wrap:wrap; }
-    .disease-sidebar li{ padding:8px 10px; }
-  }
-</style>
-
 <section class="disease-wrapper">
   <nav class="sidebar disease-sidebar">
     <h3>치매</h3>
@@ -163,5 +97,7 @@
     </section>
   </main>
 </section>
+
+<script src="{{ url_for('static', filename='js/disease.js') }}"></script>
 
 {% endblock %}

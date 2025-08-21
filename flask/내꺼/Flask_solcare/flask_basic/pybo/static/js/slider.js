@@ -32,21 +32,6 @@ setInterval(() => {
 }, 3000);
 
 
-// 뉴스 슬라이드 이동 버튼 동작
-// const track = document.querySelector(".slider-track");
-// const prev = document.querySelector(".prev");
-// const next = document.querySelector(".next");
-
-// if (track && prev && next) {
-//   prev.addEventListener("click", () => {
-//     track.scrollBy({ left: -300, behavior: 'smooth' });
-//   });
-
-//   next.addEventListener("click", () => {
-//     track.scrollBy({ left: 300, behavior: 'smooth' });
-//   });
-// }
-
 // 자동 뉴스 슬라이더
 const track = document.querySelector('.slider-track');
 const cards = document.querySelectorAll('.news-card');

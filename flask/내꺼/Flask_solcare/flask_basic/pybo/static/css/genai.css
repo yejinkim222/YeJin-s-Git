@@ -1,0 +1,82 @@
+/* ===== GenAI Chat 전용 (전역과 비겹치게 최소만) ===== */
+
+/* 래퍼 */
+.genai-chat-wrap{
+  max-width: 800px;
+  margin: 24px auto;
+  padding: 0 16px; /* 모바일 여백 */
+}
+
+/* 제목 */
+.chat-title{
+  margin-bottom: 12px;
+}
+
+/* 메시지 리스트 박스 */
+.chat-box{
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px;
+  min-height: 320px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.06);
+}
+
+/* 메시지 줄 */
+.msg-row{
+  margin: 8px 0;
+  line-height: 1.6;
+}
+
+.msg-row.user{
+  text-align: right;
+}
+
+.msg-row.assistant{
+  text-align: left;
+  color: #333;
+}
+
+/* 전송 폼 */
+.chat-form{
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+.chat-input{
+  flex: 1;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+
+/* 버튼 (전역에 .btn이 없다면 사용, 있으면 이 블록은 빼셔도 됩니다) */
+.btn{
+  display: inline-block;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: var(--primary-color);
+  color: #fff;
+  border: none;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn:hover{
+  background: var(--primary-hover);
+}
+
+.btn-secondary{
+  background: var(--cancel-color);
+  color: #fff;
+}
+
+.btn-secondary:hover{
+  background: var(--cancel-hover);
+}
+
+/* 작은 화면 대응 */
+@media (max-width: 520px){
+  .chat-form{ flex-direction: column; }
+  .chat-reset{ width: 100%; text-align: center; }
+}

@@ -17,6 +17,7 @@
                 </ul>
             </li>
             <li><a href="/templates/map/map.html">치매 센터 안내</a></li>
+            <li><a href="{{ url_for('genai.chat') }}">생성형 AI</a></li>
             {% if g.user %}
             <li><a href="{{ url_for('auth.logout') }}">로그아웃</a></li>
             {% else %}

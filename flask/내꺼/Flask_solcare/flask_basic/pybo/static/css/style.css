@@ -1,4 +1,3 @@
-
 :root {
   /* 확인, 메인 버튼 컬러 */
   --primary-color: #26a69a;
@@ -8,8 +7,6 @@
   --cancel-color: #6faea9;    
   --cancel-hover: #599d97;    
 }
-
-
 
 
 /* ===== 공통 초기화 및 전역 설정 ===== */
@@ -91,7 +88,7 @@ nav ul li ul {
   left: 50%;
   transform: translateX(-50%);
   z-index: 99;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.85);
   border: 1px solid #ddd;
   padding: 10px;
   border-radius: 12px;
