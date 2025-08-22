@@ -1,0 +1,48 @@
+<header>
+  <div class="logo">
+    <a href="{{ url_for('main.index') }}">SolCare</a>
+    {% if g.user %}
+      <span class="user-greeting">{{ g.user.username }}님, 안녕하세요?</span>
+    {% endif %}
+  </div>
+
+  <nav>
+    <ul>
+      <li>
+        <a href="{{ url_for('main.disease_home') }}">질병 정보</a>
+        <ul class="dropdown">
+          <li><a href="{{ url_for('main.disease_home') }}">질병 정보</a></li>
+          <li><a href="{{ url_for('main.disease_voice') }}">AI 자가 진단(음성)</a></li>
+        </ul>
+      </li>
+
+      <li>
+        <a href="{{ url_for('mci.create_input') }}">치매 예측 서비스</a>
+        <ul class="dropdown">
+          <!-- 하드코드 경로 대신 라우트 사용 권장 -->
+          <li><a href="{{ url_for('mci.create_input') }}">치매 예측</a></li>
+          <li><a href="{{ url_for('mci.create_input') }}">MCI 예측</a></li>
+        </ul>
+      </li>
+
+      <!-- 지도 페이지도 가능하면 전용 블루프린트 라우트로 연결하세요.
+           예: url_for('map.home') -->
+      <!-- <li><a href="/templates/map/map.html">치매 센터 안내</a></li>-->
+      <li><a href="#">치매 센터 안내</a></li>
+
+      <li>
+        <a href="{{ url_for('genai.chat') }}">생성형 AI</a>
+        <ul class="dropdown">
+          <li><a href="{{ url_for('genai.chat') }}">AI 상담 챗봇</a></li>
+          <li><a href="{{ url_for('genai.screen') }}">인지 스크리닝 대화</a></li>
+        </ul>
+      </li>
+
+      {% if g.user %}
+        <li><a href="{{ url_for('auth.logout') }}">로그아웃</a></li>
+      {% else %}
+        <li><a href="{{ url_for('auth.login') }}">로그인/회원가입</a></li>
+      {% endif %}
+    </ul>
+  </nav>
+</header>

@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="main-page slider">
+  <!-- 슬라이드 이미지들 -->
+  <div class="slide active">
+    <img src="{{ url_for('static', filename='images/image_main01.png') }}" alt="슬라이드1" class="hero-bg" />
+  </div>
+  <div class="slide">
+    <img src="{{ url_for('static', filename='images/image_main02.png') }}" alt="슬라이드2" class="hero-bg" />
+  </div>
+  <div class="slide">
+    <img src="{{ url_for('static', filename='images/image_main03.png') }}" alt="슬라이드3" class="hero-bg" />
+  </div>
+
+  <!-- 좌우 화살표 버튼 -->
+  <div class="arrow left" onclick="prevSlide()">❮</div>
+  <div class="arrow right" onclick="nextSlide()">❯</div>
+
+  <div class="hero-textbox">
+    <h1>SolCare는 당신의 건강을 함께 고민합니다</h1>
+    <p>당신의 삶에 따뜻한 케어를 더합니다</p>
+  </div>
+
+  <!-- 하단 점 네비게이션 -->
+  <div class="dots">
+    <span class="dot active" onclick="goToSlide(0)"></span>
+    <span class="dot" onclick="goToSlide(1)"></span>
+    <span class="dot" onclick="goToSlide(2)"></span>
+  </div>
+</section>
+
+<!-- 기능 블럭 -->
+<section class="feature-section">
+  <div class="feature-box disease" onclick="location.href='{{ url_for('main.disease_home') }}'">
+    <div class="feature-overlay">
+      <h2>질병 정보</h2>
+      <p>치매 및 노인 질환에 대한 정보를 제공합니다.</p>
+      <button>자세히 보기</button>
+    </div>
+  </div>
+
+  <div class="feature-box predict" onclick="location.href='{{ url_for('mci.create_input') }}'">
+    <div class="feature-overlay">
+      <h2>치매 예측 서비스</h2>
+      <p>MCI 및 독거노인 기반의 치매 위험 예측 서비스를 제공합니다.</p>
+      <button>자세히 보기</button>
+    </div>
+  </div>
+
+  <div class="feature-box center" onclick="location.href='{{ url_for('main.disease_home') }}'">
+    <div class="feature-overlay">
+      <h2>치매 센터 안내</h2>
+      <p>서울시 내 치매센터 및 복지센터 위치를 안내합니다.</p>
+      <button>자세히 보기</button>
+    </div>
+  </div>
+</section>
+
+<!-- 뉴스 슬라이드 영역 -->
+<section id="news-slider">
+  <h2>치매 예방과 독거노인 돌봄 뉴스</h2>
+  <div class="slider-wrapper">
+    <button class="prev">&lt;</button>
+    <div class="slider-track">
+      <div class="news-card">
+        <h3>AI 기반 치매 진단 정확도 높인다…서울대병원, 의료현장 적용</h3>
+        <p>서울대병원이 AI 기반 치매 조기 진단 모델을 개발해 실제 의료현장에 적용하고 있으며...</p>
+        <span class="date">2024-06-26</span>
+        <a href="https://www.medipana.com/article/view.php?page=2&sch_menu=1&sch_cate=D&news_idx=343537" target="_blank">자세히 보기</a>
+      </div>
+
+      <div class="news-card">
+        <h3>“치매 예방에 AI가 뜬다”…AI가 고위험군 조기 발견</h3>
+        <p>치매 예방을 위해 인공지능(AI)을 활용한 조기 위험군 탐지 기술이 주목받고 있으며...</p>
+        <span class="date">2024-07-01</span>
+        <a href="https://www.etoday.co.kr/news/view/2482727" target="_blank">자세히 보기</a>
+      </div>
+
+      <div class="news-card">
+        <h3>고령사회 진입한 한국, AI 활용 치매관리 전략 본격화</h3>
+        <p>치매 환자 수 증가에 대응하기 위해 AI 기반 치매 예측 및 관리 시스템이 도입되고 있으며...</p>
+        <span class="date">2024-06-20</span>
+        <a href="https://www.dementianews.co.kr/news/articleView.html?idxno=10186" target="_blank">자세히 보기</a>
+      </div>
+
+      <div class="news-card">
+        <h3>보건복지부, ‘치매국가책임제’ 2기 추진…지역 맞춤형 강화</h3>
+        <p>보건복지부가 ‘치매국가책임제’ 2기를 시작하며, 지역사회 기반 치매 예방 및 관리 서비스를 강화...</p>
+        <span class="date">2024-06-28</span>
+        <a href="https://www.k-health.com/news/articleView.html?idxno=83011" target="_blank">자세히 보기</a>
+      </div>
+
+      <div class="news-card">
+        <h3>“AI로 치매 조기 발견”…MBC가 간다</h3>
+        <p>치매 조기 발견을 위한 AI 기술 도입이 활발해지며, 의료 현장뿐 아니라 지자체도 관련 기술 도입 중...</p>
+        <span class="date">2024-07-08</span>
+        <a href="https://imnews.imbc.com/replay/2024/nw930/article/6640883_36507.html" target="_blank">자세히 보기</a>
+      </div>
+    </div>
+    <button class="next">&gt;</button>
+  </div>
+</section>
+
+<!-- 팀 섹션 -->
+<section class="team-section">
+  <h2>SolCare를 함께 만드는 사람들</h2>
+  <div class="team-container">
+    <div class="team-card">
+      <img src="{{ url_for('static', filename='images/image_ai-agent.png') }}" alt="김윤지">
+      <h3>김윤지</h3>
+      <p>독거노인 데이터 분석 및 모델개발<br>통계/머신러닝 전문가</p>
+    </div>
+    <div class="team-card">
+      <img src="{{ url_for('static', filename='images/image_pro_woman.png') }}" alt="김예진">
+      <h3>김예진</h3>
+      <p>치매 예측 모델 예측 및 개발<br>통계/머신러닝 전문가</p>
+    </div>
+    <div class="team-card">
+      <img src="{{ url_for('static', filename='images/image_digital-art.png') }}" alt="홍세나">
+      <h3>홍세나</h3>
+      <p>웹 UI/UX 기획자<br>카카오맵 시각화 설계 담당</p>
+    </div>
+  </div>
+</section>
+
+<!-- 슬라이더 JS -->
+<script src="{{ url_for('static', filename='js/slider.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/genai.css') }}">
+
+<div class="genai-chat-wrap">
+  <h2 class="chat-title">인지 스크리닝 대화(음성)</h2>
+
+  <div class="chat-box" style="height: 320px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; background: #fff;">
+    <div id="screen-log" style="white-space: pre-wrap; font-size: 0.95rem; line-height: 1.4;">
+SolCare: 간단한 문답으로 최근 인지 상태를 살펴봅니다. 의료 진단이 아니며, 결과는 참고용입니다.
+SolCare: 준비되면 ‘녹음’을 눌러 질문에 답해주세요.
+    </div>
+  </div>
+
+  <label for="recognized" style="display:block; margin-top:14px; font-weight:600;">인식된 답변 (필요하면 수정하세요)</label>
+  <textarea id="recognized" class="chat-input" placeholder="여기에 음성 인식 결과가 표시됩니다."
+            style="width:100%; height: 90px; resize: vertical;"></textarea>
+
+  <div class="screen-controls" style="display:flex; align-items:center; gap:10px; margin-top:10px;">
+    <button id="btnStart" class="btn">시작</button>
+    <button id="btnRec"   class="btn btn-secondary">녹음</button>
+
+    <div style="margin-left:auto; display:flex; align-items:center; gap:10px;">
+      <span id="timeLeft" style="font-weight:600; color:#0f766e;">남은 시간 60s</span>
+      <button id="btnExtend" class="btn btn-outline">+30초</button>
+      <button id="btnNext" class="btn">다음</button>
+    </div>
+  </div>
+
+  <p style="margin-top:10px; color:#64748b; font-size:0.9rem;">
+    ※ 이 도구는 교육·연구용 참고도구이며, 의학적 진단이 아닙니다.
+  </p>
+</div>
+
+<script src="{{ url_for('static', filename='js/llm_js/screen_audio_chat.js') }}"></script>
+{% endblock %}
