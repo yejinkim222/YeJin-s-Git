@@ -1,17 +1,20 @@
 # pybo/views/genai_views.py
 from __future__ import annotations
-import os, secrets, re
+import secrets, re
 from functools import lru_cache
-from typing import List, Dict, Optional
-from flask import Blueprint, render_template, request, redirect, url_for, g, session, current_app
+
+from flask import Blueprint, render_template, request, redirect, url_for, g, session
 
 from .. import db
 from pybo.models import Conversation, Message
 from pybo.rag.retriever import get_retriever
 
+
 from typing import List, Dict, Optional
+import os
 from flask import current_app
 
+from pybo.python.screening import score_screening
 
 
 # =========================
@@ -148,30 +151,308 @@ def _cached_entry(model_key: str, cache_salt: str, do_sample_default: bool, max_
     return _load_llm_cached(model_key, do_sample_default, max_new_tokens)
 
 
+# -------------------------------------------------------------------
+# Gemini 로더
+# -------------------------------------------------------------------
+def _get_gemini_loader():
+    """
+    Google Gemini API용 래퍼를 생성해 반환한다.
+    - 기본 모델: gemini-1.5-flash
+    - 429(ResourceExhausted) 발생 시: 권장 대기시간(최대 5초) 1회 재시도
+    - 여전히 실패하고 현재 모델이 pro면 flash로 다운시프트 시도
+    반환: 객체( .chat(messages: list[dict], **gen_kwargs) -> str )
+    """
+    import os, time
+    import google.generativeai as genai
+    from google.api_core.exceptions import ResourceExhausted, PermissionDenied, FailedPrecondition
+
+    api_key = os.getenv("GOOGLE_API_KEY") or current_app.config.get("GEMINI_API_KEY") or ""
+    if not api_key:
+        raise RuntimeError("GOOGLE_API_KEY 환경변수(또는 GEMINI_API_KEY 설정)가 없습니다.")
+    genai.configure(api_key=api_key)
+
+    model_name = current_app.config.get("GEMINI_MODEL", "gemini-1.5-flash")
+
+    # 한국어 강제 system 지침
+    SYSTEM_KO = (
+        "당신은 한국어로만 간결하게 답변하는 비서입니다. "
+        "역할/템플릿/토큰을 출력하지 말고, 질문에만 직접적으로 답하세요."
+    )
+
+    def _to_gemini_messages(messages):
+        """
+        우리의 messages(list[{'role','content'}]) -> Gemini contents 포맷으로 변환
+        - Gemini는 'user' | 'model' 두 role만 사용
+        - system은 모델 생성 시 system_instruction으로 이미 전달했으므로 스킵
+        """
+        conv = []
+        for m in messages:
+            role = (m.get("role") or "user").lower()
+            text = (m.get("content") or "").strip()
+            if not text:
+                continue
+            if role == "assistant":
+                conv.append({"role": "model", "parts": [text]})
+            elif role == "system":
+                # system은 이미 model 생성 시 전달 → 스킵
+                continue
+            else:
+                conv.append({"role": "user", "parts": [text]})
+        return conv
+
+    class GeminiChat:
+        def __init__(self, model_name):
+            self.model_name = model_name
+            self._model = genai.GenerativeModel(self.model_name, system_instruction=SYSTEM_KO)
+
+        def _generate(self, contents, **gen_kwargs):
+            # Gemini generation_config 매핑
+            gconf = {
+                "temperature": float(gen_kwargs.get("temperature", current_app.config.get("GENAI_TEMPERATURE", 0.2))),
+                "top_p": float(gen_kwargs.get("top_p", current_app.config.get("GENAI_TOP_P", 0.85))),
+                # top_k는 선택적
+                "max_output_tokens": int(gen_kwargs.get("max_new_tokens", current_app.config.get("GENAI_MAX_NEW_TOKENS", 200))),
+            }
+
+            # 1차 시도
+            try:
+                resp = self._model.generate_content(contents, generation_config=gconf)
+                return (resp.text or "").strip()
+            except ResourceExhausted as e:
+                # 권장 대기시간 파싱(있다면)
+                delay = getattr(getattr(e, "retry_delay", None), "seconds", None)
+                if delay is None:
+                    delay = 3
+                delay = min(int(delay), 5)
+                time.sleep(max(1, delay))
+                # 2차 시도
+                resp = self._model.generate_content(contents, generation_config=gconf)
+                return (resp.text or "").strip()
+
+        def chat(self, messages, **gen_kwargs):
+            contents = _to_gemini_messages(messages)
+            try:
+                out = self._generate(contents, **gen_kwargs)
+                if out:
+                    return out
+                return "(응답이 비어 있습니다)"
+            except ResourceExhausted:
+                # 여전히 터질 때, pro면 flash로 다운시프트(자동 완화)
+                if self.model_name.startswith("gemini-1.5-pro"):
+                    try:
+                        fallback = "gemini-1.5-flash"
+                        self.model_name = fallback
+                        self._model = genai.GenerativeModel(self.model_name, system_instruction=SYSTEM_KO)
+                        out = self._generate(contents, **gen_kwargs)
+                        return out or "(응답이 비어 있습니다)"
+                    except Exception as e2:
+                        return f"(Gemini 호출 오류) {type(e2).__name__}: {e2}"
+                return "(Gemini 호출 오류) ResourceExhausted: 쿼터를 초과했습니다. 잠시 후 다시 시도해 주세요."
+            except PermissionDenied as e:
+                return f"(Gemini 호출 오류) PermissionDenied: {e}"
+            except FailedPrecondition as e:
+                # API 비활성 등
+                return f"(Gemini 호출 오류) FailedPrecondition: {e}"
+            except Exception as e:
+                return f"(Gemini 호출 오류) {type(e).__name__}: {e}"
+
+        # 우리 프레임워크와의 호환을 위해 __call__도 지원
+        def __call__(self, prompt_or_messages, **gen_kwargs):
+            if isinstance(prompt_or_messages, list):
+                return self.chat(prompt_or_messages, **gen_kwargs)
+            # 문자열 프롬프트 → 단일 user turn으로 감싸기
+            return self.chat(
+                [{"role": "user", "content": str(prompt_or_messages)}],
+                **gen_kwargs
+            )
+
+    return GeminiChat(model_name)
+
+
+# -------------------------------------------------------------------
+# (선택) 로컬 Qwen 로더 - 백업 용도
+# -------------------------------------------------------------------
+def _get_local_qwen_loader():
+    """
+    로컬 Qwen 파이프라인 래퍼(백업/비상용).
+    - HuggingFace transformers pipeline 사용
+    - 한국어 시스템 지침 반영
+    반환: LocalChat( .chat(messages) / __call__ )
+    """
+    from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+    import torch
+
+    model_id = "Qwen/Qwen2.5-3B-Instruct"
+
+    try:
+        torch.set_num_threads(int(os.getenv("TORCH_NUM_THREADS", "4")))
+        torch.set_num_interop_threads(int(os.getenv("TORCH_NUM_INTEROP_THREADS", "1")))
+    except Exception:
+        pass
+
+    tok = AutoTokenizer.from_pretrained(model_id, use_fast=True, trust_remote_code=True)
+    if tok.pad_token_id is None and tok.eos_token_id is not None:
+        tok.pad_token = tok.eos_token
+
+    model = AutoModelForCausalLM.from_pretrained(
+        model_id,
+        torch_dtype=torch.float32,
+        low_cpu_mem_usage=True,
+        device_map=None,
+        trust_remote_code=True,
+    ).eval()
+
+    qwen_eos_id = tok.convert_tokens_to_ids("<|im_end|>") or tok.eos_token_id
+
+    gen_pipe = pipeline(
+        task="text-generation",
+        model=model,
+        tokenizer=tok,
+        do_sample=False,
+        max_new_tokens=int(current_app.config.get("GENAI_MAX_NEW_TOKENS", 200)),
+        pad_token_id=tok.pad_token_id or tok.eos_token_id,
+        eos_token_id=qwen_eos_id,
+        return_full_text=False,
+        num_return_sequences=1,
+    )
+
+    def _build_chatml_from_messages(messages: List[Dict]) -> str:
+        # apply_chat_template 미사용: ChatML 수동 구성
+        parts = []
+        sys = next((m["content"] for m in messages if m.get("role") == "system"), "")
+        if sys:
+            parts.append(f"<|im_start|>system\n{sys}<|im_end|>")
+        for m in messages:
+            r, c = m.get("role"), (m.get("content") or "").strip()
+            if r == "system" or not c:
+                continue
+            parts.append(f"<|im_start|>{r}\n{c}<|im_end|>")
+        parts.append("<|im_start|>assistant\n")
+        return "".join(parts)
+
+    class LocalChat:
+        def __init__(self, pipe, tok, model_id, eos_id):
+            self.pipe = pipe
+            self.tokenizer = tok
+            self.model_id = model_id
+            self._eos_id = eos_id
+            self.provider = "local"
+
+        def chat(self, messages: List[Dict], **gen_kwargs) -> str:
+            prompt = _build_chatml_from_messages(messages)
+            out = self.pipe(
+                prompt,
+                eos_token_id=self._eos_id,
+                max_new_tokens=gen_kwargs.get("max_new_tokens", None),
+            )
+            txt = out[0]["generated_text"] if isinstance(out, list) else str(out)
+            return (txt or "").strip()
+
+        def __call__(self, prompt_or_messages, **gen_kwargs) -> str:
+            if isinstance(prompt_or_messages, list):
+                return self.chat(prompt_or_messages, **gen_kwargs)
+            return self.chat(
+                [
+                    {"role": "system", "content": "당신은 한국어로만 간결하게 답변하는 비서입니다."},
+                    {"role": "user", "content": str(prompt_or_messages)},
+                ],
+                **gen_kwargs,
+            )
+
+    return LocalChat(gen_pipe, tok, model_id, qwen_eos_id)
+
+
+# -------------------------------------------------------------------
+# 선택자: get_llm
+# -------------------------------------------------------------------
+@lru_cache(maxsize=1)
 def get_llm():
     """
-    Qwen 2.5–3B Instruct를 기본으로 사용하며, 캐시 버스트가 가능하도록 구성합니다.
-    - GENAI_MODEL / HF_MODEL_ID / GENAI_CACHE_SALT 값이 바뀌면 새로 로드합니다.
-    - 기본 do_sample=False로 고정합니다.
+    GENAI_PROVIDER 설정에 따라 백엔드를 선택해 래퍼를 반환한다.
+    - 'gemini'  -> Google GeminiChat
+    - 'local'   -> 로컬 Qwen LocalChat
     """
-    presets = {
-        "qwen2.5-3b":          "Qwen/Qwen2.5-3B-Instruct",
-        "qwen2.5-1.5b":        "Qwen/Qwen2.5-1.5B-Instruct",
-        "qwen2.5-0.5b":        "Qwen/Qwen2.5-0.5B-Instruct",
-    }
-    picked = (current_app.config.get("GENAI_MODEL")
-              or current_app.config.get("HF_MODEL_ID")
-              or "qwen2.5-3b").lower()
-    model_key = presets.get(picked, picked)
+    provider = (current_app.config.get("GENAI_PROVIDER") or "gemini").lower()
+    if provider == "gemini":
+        return _get_gemini_loader()
+    if provider == "local":
+        return _get_local_qwen_loader()
+    # 알 수 없는 값이면 Gemini 우선
+    return _get_gemini_loader()
 
-    # 캐시 버스트용 소금값: 배포/디버그 시 바꿔주면 재빌드됩니다.
-    cache_salt = str(current_app.config.get("GENAI_CACHE_SALT", "v1"))
 
-    # 기본은 탐색 끔
-    do_sample_default = False
-    max_new_tokens = int(current_app.config.get("GENAI_MAX_NEW_TOKENS", 200))
+# ------------------------------
+# EXAONE (OpenAI 호환 REST 가정)
+# ------------------------------
+def _get_exaone_loader():
+    """
+    역할:
+      - EXAONE 제공처의 OpenAI 호환 REST 엔드포인트를 호출하는 래퍼를 만든다.
+      - 실제 엔드포인트/모델 id는 공급자 문서대로 config에서 설정.
+    필요 env/config:
+      - EXAONE_API_KEY, EXAONE_API_BASE, EXAONE_MODEL
+    반환:
+      - ExaoneChat 래퍼( .chat(messages), __call__(prompt) )
+    """
+    import requests
 
-    return _cached_entry(model_key, cache_salt, do_sample_default, max_new_tokens)
+    api_key  = current_app.config.get("EXAONE_API_KEY")  or ""
+    base_url = current_app.config.get("EXAONE_API_BASE") or "https://api.exaone.ai/v1"
+    model_id = current_app.config.get("EXAONE_MODEL")    or "exaone-3.0-instruct"
+    if not api_key:
+        raise RuntimeError("EXAONE_API_KEY 가 설정되지 않았습니다.")
+
+    chat_url = base_url.rstrip("/") + "/chat/completions"  # OpenAI 호환 경로 가정
+
+    class ExaoneChat:
+        def __init__(self, model_id, url, key):
+            self.model_id = model_id
+            self.url = url
+            self.key = key
+
+        def _headers(self):
+            return {
+                "Authorization": f"Bearer {self.key}",
+                "Content-Type": "application/json",
+            }
+
+        def chat(self, messages, **gen_kwargs) -> str:
+            # temperature, top_p, max_tokens 매핑
+            payload = {
+                "model": self.model_id,
+                "messages": messages,  # system/user/assistant 구조 그대로 사용
+            }
+            if gen_kwargs.get("temperature") is not None:
+                payload["temperature"] = float(gen_kwargs["temperature"])
+            if gen_kwargs.get("top_p") is not None:
+                payload["top_p"] = float(gen_kwargs["top_p"])
+            if gen_kwargs.get("max_new_tokens") is not None:
+                payload["max_tokens"] = int(gen_kwargs["max_new_tokens"])
+
+            r = requests.post(self.url, headers=self._headers(), json=payload, timeout=60)
+            r.raise_for_status()
+            data = r.json()
+
+            # OpenAI 호환: choices[0].message.content
+            try:
+                text = data["choices"][0]["message"]["content"]
+            except Exception:
+                # 일부 구현체는 'output_text' 또는 'choices[0].text' 등 변형일 수 있음
+                text = data.get("output_text") or data.get("choices", [{}])[0].get("text", "")
+            return (text or "").strip()
+
+        def __call__(self, prompt_or_messages, **gen_kwargs) -> str:
+            if isinstance(prompt_or_messages, list):
+                return self.chat(prompt_or_messages, **gen_kwargs)
+            return self.chat(
+                [
+                    {"role": "system", "content": "당신은 한국어로만 간결하게 답변하는 비서입니다."},
+                    {"role": "user",   "content": str(prompt_or_messages)},
+                ],
+                **gen_kwargs,
+            )
+
+    return ExaoneChat(model_id, chat_url, api_key)
 
 
 # =========================
@@ -405,6 +686,35 @@ def _clear_anon() -> None:
     session.pop("anon_messages", None)
 
 
+# === Whisper 로더 & 전사 ===
+from functools import lru_cache
+
+@lru_cache(maxsize=1)
+def _get_asr_model():
+    """
+    faster-whisper 모델 단일 인스턴스 로더.
+    """
+    from faster_whisper import WhisperModel
+    model_size  = current_app.config.get("ASR_MODEL", "small")
+    # CPU 기준 권장 설정
+    return WhisperModel(model_size, device="cpu", compute_type="int8")
+
+def _asr_transcribe_ko(audio_path: str) -> str:
+    """
+    한국어 우선 전사. 실패 시 빈 문자열.
+    입력: 로컬 오디오 파일 경로
+    출력: 공백 정리된 문자열
+    """
+    model = _get_asr_model()
+    beam  = int(current_app.config.get("ASR_BEAM", 5))
+    segments, info = model.transcribe(audio_path, language="ko", task="transcribe", beam_size=beam)
+    text = "".join(seg.text for seg in segments).strip()
+    # 여분 공백/개행 정리
+    import re
+    text = re.sub(r"\s+", " ", text)
+    return text
+
+
 # =========================
 # 6) 라우트
 # =========================
@@ -484,6 +794,72 @@ def chat():
         anon_msgs = _get_anon_messages()
         fake_conv = type("Conv", (), {"title": f"게스트-{_ensure_anon_key()[:6]}의 대화"})
         return render_template("genai/chat.html", messages=anon_msgs, conversation=fake_conv, is_guest=True)
+
+
+# === (A) 인지 스크리닝(음성) 페이지 ===
+@bp.route("/screen", methods=["GET"])
+def screen():
+    """
+    인지 스크리닝(음성 기반) 페이지 렌더.
+    """
+    return render_template("genai/screen_voice.html", is_guest=(getattr(g, "user", None) is None))
+
+
+# === (B) ASR: 브라우저에서 업로드한 오디오를 Whisper로 받아 적기 ===
+@bp.route("/asr", methods=["POST"])
+def asr_transcribe():
+    """
+    브라우저 MediaRecorder로 녹음한 파일(webm/opus 등)을 받아
+    faster-whisper로 한국어 전사 후 {text: "..."} 반환.
+    """
+    from flask import jsonify
+    import tempfile, subprocess, uuid, os
+
+    f = request.files.get("audio")
+    if not f:
+        return jsonify(error="no file"), 400
+
+    # 업로드 임시 저장
+    tmp_dir = os.path.join(current_app.root_path, "data", "asr_tmp")
+    os.makedirs(tmp_dir, exist_ok=True)
+    in_path  = os.path.join(tmp_dir, f"rec_{uuid.uuid4().hex}.webm")
+    out_wav  = os.path.join(tmp_dir, f"rec_{uuid.uuid4().hex}.wav")
+    f.save(in_path)
+
+    # ffmpeg로 wav(16kHz/mono) 변환
+    try:
+        cmd = ["ffmpeg", "-y", "-i", in_path, "-ac", "1", "-ar", "16000", out_wav]
+        subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        audio_path = out_wav
+    except Exception:
+        # ffmpeg 없으면 원본 파일로 시도(환경에 따라 실패할 수 있음)
+        audio_path = in_path
+
+    try:
+        text = _asr_transcribe_ko(audio_path)
+        return jsonify(text=text)
+    finally:
+        # 정리
+        for p in (in_path, out_wav):
+            try:
+                if os.path.exists(p):
+                    os.remove(p)
+            except Exception:
+                pass
+
+
+# === (C) 점수 계산 ===
+@bp.route("/screen/score", methods=["POST"])
+def screen_score():
+    """
+    클라이언트가 누적 답변(텍스트)을 보내면 점수/판정/피드백 반환.
+    바디: {"answers": {"date": "...", "weekday": "...", ...}}
+    """
+    from flask import jsonify
+    data = request.get_json(silent=True) or {}
+    answers = data.get("answers") or {}
+    result = score_screening(answers)
+    return jsonify(result)
 
 
 # rag 구현
