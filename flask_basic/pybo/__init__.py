@@ -12,7 +12,7 @@ def create_app(config_name: str | None = None) -> Flask:
     app = Flask(__name__, instance_relative_config=True)
 
     # 기본 설정 로드
-    app.config.from_object("pybo.config")
+    app.config.from_object("config")
 
     # 프로파일별 오버라이드 (선택)
     if config_name == "dev":
