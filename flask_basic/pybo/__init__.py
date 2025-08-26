@@ -11,8 +11,32 @@ migrate = Migrate()
 def create_app(config_name: str | None = None) -> Flask:
     load_dotenv()
 
+<<<<<<< HEAD
+    # 기본 설정 로드
+    app.config.from_object("config")
+
+    # 프로파일별 오버라이드 (선택)
+    if config_name == "dev":
+        app.config.update(DEBUG=True)
+    elif config_name == "test":
+        app.config.update(TESTING=True)
+
+    # 확장 초기화
+    # db.init_app(app); migrate.init_app(app, db)
+
+    # 블루프린트 등록
+    from .views.main_views import bp as main_bp
+    from .views.genai_views import bp as genai_bp
+    from .views.disease_views import bp as disease_bp  # 있다면
+    app.register_blueprint(main_bp)
+    app.register_blueprint(genai_bp)
+    app.register_blueprint(disease_bp)
+
+    # per-app 저장소(전역 lru_cache 대체)
+=======
     app = Flask(__name__)
     app.config.from_object(config)
+>>>>>>> a68f713665d4fa00dd57d6c94a8805c6a9c82018
     app.extensions.setdefault("llm_store", {})
 
     db.init_app(app)
