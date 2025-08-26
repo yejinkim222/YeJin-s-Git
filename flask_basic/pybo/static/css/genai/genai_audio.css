@@ -1,0 +1,74 @@
+/* ===== 인지 스크리닝 대화 전용 ===== */
+
+/* 페이지 전체 여백 + 가운데 정렬 */
+.genai-chat-wrap {
+  max-width: 920px;            /* 데스크톱에서 너무 넓지 않게 */
+  margin: 28px auto 56px;      /* 상/하 여백 확장, 좌우 가운데 정렬 */
+  padding: 0 24px;             /* 양쪽 내부 여백(모바일에서 체감) */
+}
+
+/* 타이틀 간격 */
+.chat-title {
+  margin: 0 0 18px 2px;
+}
+
+/* 대화 영역(컨테이너) */
+.chat-shell {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;         /* 모서리 더 둥글게 */
+  height: 440px;               /* 세로 공간 확대 */
+  overflow: auto;
+  padding: 18px 22px;          /* 내부 여백 확장 */
+  box-shadow: 0 2px 8px rgba(15, 23, 42, .06); /* 은은한 그림자 */
+}
+
+/* 말풍선 리스트와 간격 */
+.chat-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;                   /* 버블 사이 간격 ↑ */
+}
+
+.msg { display: flex; gap: 10px; }
+.msg.bot  { justify-content: flex-start; }
+.msg.user { justify-content: flex-end; }
+
+/* 말풍선 */
+.bubble {
+  max-width: 72%;
+  padding: 12px 14px;          /* 버블 내부 여백 확대 */
+  border-radius: 18px;
+  line-height: 1.55;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+.bubble.bot  { background: #f1f5f9; border-top-left-radius: 8px; }
+.bubble.user { background: #dcfce7; border-top-right-radius: 8px; }
+
+/* 인식 텍스트 영역 */
+.sr-label    { display: block; margin-top: 18px; font-weight: 600; }
+.chat-input  { width: 100%; height: 110px; resize: vertical; margin-top: 12px; }
+
+/* 하단 컨트롤 */
+.screen-controls { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
+.controls-right  { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.time-left       { font-weight: 600; color: #0f766e; }
+
+/* 주의 문구 */
+.notice { margin-top: 14px; color: #64748b; font-size: 0.9rem; }
+
+/* 버튼(프로젝트 공통 btn이 있으면 유지해도 OK) */
+.btn           { padding: 9px 14px; border-radius: 10px; border: 1px solid #10b981; background:#10b981; color:#fff; }
+.btn-secondary { background:#334155; border-color:#334155; }
+.btn-outline   { background:#fff; color:#0f766e; border-color:#0f766e; }
+
+/* 모바일 최적화 */
+@media (max-width: 640px) {
+  .genai-chat-wrap { max-width: 100%; margin: 18px auto 40px; padding: 0 14px; }
+  .chat-shell      { height: 380px; padding: 14px 16px; }
+  .bubble          { max-width: 86%; }
+}

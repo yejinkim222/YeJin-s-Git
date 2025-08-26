@@ -1,0 +1,146 @@
+/* 사이드바 */
+.sidebar {
+  position: fixed;
+  top: 50%;
+  left: 0;
+  width: 220px;
+  background: #ffffff;
+  border-right: 1px solid #ddd;
+  padding: 10px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+}
+
+
+.sidebar ul {
+  top: 20px;                    /* 지역선택과 전체 사이 너비 */
+  height: auto;
+  overflow-y: auto;           /* 8/6 수정 스크롤 생기게 함 */
+  list-style: none;
+  margin-bottom: 20px;
+  display: block;
+  position: relative;  /* 8/6 수정 fixed x → relative로 수정 */
+  z-index: 10;         /* 8/6 수정 지도가 뒤로 가게 함 */
+  width: 220px;
+  background: #fff;
+  border-right: 1px solid #ddd;
+  padding: 0px;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+}
+
+.sidebar ul li {
+  font-size: 14px;
+  padding: 6px 10px;
+  margin-bottom: 5px;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.2s ease, font-weight 0.2s ease;
+}
+
+
+.sidebar .back-btn {
+  display: block;
+  margin-top: 30px;
+  padding: 10px 20px;
+  background: #2283e4;
+  color: white;
+  text-align: center;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 15px;
+}
+
+
+/* 질병 정보 화면 */
+.disease-wrapper {
+  display: flex;
+  min-height: calc(100vh - 60px);
+}
+.disease-sidebar {
+  position: fixed;
+  top: 20%;
+  left: 10px;
+  width: 220px;
+  height: auto;
+  background-color: #f8fafc;
+  border-right: 2px solid #e3f2fd;
+  display: flex;
+  align-items: center;   /* 내부 세로 중앙 정렬 */
+  justify-content: flex-start; /* 내부 가로 중앙 (필요 시) */
+}
+.disease-sidebar h3 {
+  font-size: 15px;
+  color: #333;
+  border-bottom: 1px solid #bbb;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  padding-top: 10px;
+  font-size: 15px;
+  margin-bottom: 10px;
+  color: #1565c0;
+}
+.disease-sidebar ul li.active,
+.disease-sidebar ul li:hover {
+  background-color: #e3f2fd;
+  color: #e3f2fd;
+  font-weight: bold;
+}
+.disease-sidebar .back-btn {
+  margin-top: 20px;  /*항목과 간격만 유지 */
+  padding: 10px;
+  background: #1976d2;
+  color: white;
+  text-align: center;
+  border-radius: 6px;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  width: 100%;
+}
+.disease-sidebar .back-btn:hover {
+  background-color: #1565c0;
+}
+.content {
+  margin-left: 250px;
+  flex-grow: 1;
+  padding: 24px 16px;
+}
+/* 내용 박스(카드) – 최대한 크게, 하지만 여백 유지 */
+.content-card{
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0,0,0,.06);
+  padding: 28px 32px;
+
+  /* 컨텐츠 영역 안에서 중앙 정렬 & 넓게 */
+  max-width: 1100px;
+  width: min(1100px, 100%);
+  margin: 0 auto;                 /* 컨텐츠 영역 내에서 가운데 정렬 */
+}
+
+/* 섹션 간격 & 앵커 스크롤 보정(헤더/네비가 가릴 때 대비) */
+.content-card section{
+  margin-bottom: 36px;
+  scroll-margin-top: 80px;
+}
+.content-card h2{ margin: 6px 0 14px; }
+.content-card h3{ margin: 14px 0 10px; }
+
+/* 링크 컬러 살짝 */
+.content-card a{
+  color:#1565c0;
+  text-decoration: underline;
+}
+.content-card a:hover{ text-decoration: none; }
+
+section h2.icon-title::before {
+  content: "🔍 ";
+  margin-right: 5px;
+}
+section h3 { margin-bottom: 10px; font-size: 18px; color: #004d40; }
+section h3.icon-title::before { content: "🧠 "; margin-right: 5px; }
+section p { color: #333; line-height: 1.6; margin-bottom: 15px; }

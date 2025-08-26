@@ -1,52 +1,67 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/disease_voice.css') }}" />
+{% endblock %}
+
+
 {% block content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/genai.css') }}">
+<div class="container">
+  <h2>인지 스크리닝 대화(음성)</h2>
 
-<style>
-  /* 페이지 전용 레이아웃 살짝 보강 */
-  .screen-box { background:#fff; border-radius:12px; padding:20px; box-shadow:0 4px 14px rgba(0,0,0,.06); }
-  .log { height:320px; overflow:auto; white-space:pre-wrap; border:1px solid #e6e6e6; border-radius:8px; padding:14px; background:#fbfbfb; }
-  .actions { display:flex; align-items:center; justify-content:space-between; margin-top:12px; }
-  .actions .left { display:flex; gap:8px; align-items:center; }
-  .countdown { font-size:.95rem; color:#0a7b34; padding:0 8px; }
-  .answer-wrap { margin-top:12px; }
-  .answer-wrap label { display:block; font-weight:600; margin-bottom:6px; }
-  .answer-wrap textarea { width:100%; min-height:70px; resize:vertical; border:1px solid #e6e6e6; border-radius:8px; padding:10px; }
-  .msg-row { margin:6px 0; }
-  .msg-row .role { font-weight:700; }
-</style>
+  <form id="screenForm" method="post" onsubmit="return false;">
+    {# Flask-WTF CSRF 사용 중이면 자동 삽입 #}
+    {% if csrf_token is defined %}
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% endif %}
 
-<div class="genai-chat-wrap">
-  <h2 class="chat-title">인지 스크리닝 대화(음성)</h2>
-
-  <div class="screen-box">
-    <div id="log" class="log">
-      <div class="msg-row"><span class="role">SolCare:</span> 간단한 문답으로 최근 인지 상태를 살펴봅니다. 의료 진단이 아니며, 결과는 참고용입니다.</div>
-      <div class="msg-row"><span class="role">SolCare:</span> 오늘 날짜를 말해 주세요. (예: 이천이십오년 팔월 이십일일 또는 2025-08-21)</div>
-    </div>
-
-    <div class="answer-wrap">
-      <label for="answerBox">인식된 답변 (필요하면 수정하세요)</label>
-      <textarea id="answerBox" placeholder="여기에 음성 인식 결과가 표시됩니다."></textarea>
-    </div>
-
-    <div class="actions">
-      <div class="left">
-        <button class="btn" id="startBtn">시작</button>
-        <button class="btn" id="recBtn">녹음</button>
-        <span class="countdown">남은 시간 <b id="timeLeft">60</b>s</span>
-        <button class="btn btn-secondary" id="extendBtn" title="질문당 녹음 시간을 30초 연장">+30초</button>
+    {# 에러 블록 (선택) — 필요 시 form.errors 렌더 #}
+    {% if form is defined and form.errors %}
+      <div class="form-errors form-errors--in-grid">
+        {% include "form_errors.html" %}
       </div>
-      <div class="right">
-        <button class="btn btn-primary" id="nextBtn">다음</button>
+    {% endif %}
+
+    <div class="genai-chat-wrap">
+      <div class="screen-box" id="screenBox" data-api="{{ url_for('disease.ad8_step') }}">
+        <div id="log" class="log">
+          <div class="msg-row">
+            <span class="role">SolCare:</span>
+            간단한 문답으로 최근 인지 상태를 살펴봅니다. 의료 진단이 아니며, 결과는 참고용입니다.
+          </div>
+          {# 첫 질문은 시작 버튼 클릭 시 서버에서 내려옴 #}
+        </div>
+
+        <div class="answer-wrap">
+          <label for="answerBox">인식된 답변 (필요하면 수정하세요)</label>
+          <textarea id="answerBox" placeholder="여기에 음성 인식 결과가 표시됩니다."></textarea>
+        </div>
+
+        <div class="actions">
+          <div class="left">
+            <button class="btn" id="startBtn" type="button">시작</button>
+            <button class="btn" id="recBtn" type="button">녹음</button>
+            <span class="countdown">남은 시간 <b id="timeLeft">60</b>s</span>
+            <button class="btn btn-secondary" id="extendBtn" type="button" title="질문당 녹음 시간을 30초 연장">+30초</button>
+          </div>
+          <div class="right">
+            <button class="btn btn-primary" id="nextBtn" type="button">다음</button>
+          </div>
+        </div>
+
+        <p style="font-size:.85rem; color:#777; margin-top:10px;">
+          ※ 이 도구는 교육·연구용 참고도구이며, 의학적 진단이 아닙니다.
+        </p>
       </div>
     </div>
+  </form>
 
-    <p style="font-size:.85rem; color:#777; margin-top:10px;">
-      ※ 이 도구는 교육·연구용 참고도구이며, 의학적 진단이 아닙니다.
-    </p>
-  </div>
+  <a href="{{ url_for('main.index') }}" class="back-btn" style="display:block; text-align:center; margin-top:30px;">◀ 돌아가기</a>
 </div>
+{% endblock %}
 
-<script src="{{ url_for('static', filename='js/llm_js/screen_voice.js') }}"></script>
+{% block scripts %}
+{# 최신 JS 강제 로드 (캐시 버스터) #}
+<script src="{{ url_for('static', filename='js/disease.js', v='6') }}"></script>
 {% endblock %}

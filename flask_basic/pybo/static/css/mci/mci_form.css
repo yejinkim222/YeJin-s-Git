@@ -1,0 +1,187 @@
+
+
+/* === 예측 입력 폼 영역 === */
+.predict-section {
+  padding: 40px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+.predict-section h2 {
+  color: #1976d2;
+  margin-bottom: 25px;
+}
+
+/* === form 전체 구조 (그리드) === */
+form {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 15px 20px;
+  align-items: center;
+  background: #fff;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+form label {
+  text-align: right;
+  font-weight: bold;
+}
+.form-row {
+  display: contents;
+}
+input[type="number"],
+select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+/* === 라디오 그룹 === */
+.radio-group {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  grid-column: 2 / 3;
+}
+.radio-group label {
+  font-weight: normal;
+  text-align: left;
+}
+
+
+/* 치매, mci 예측버튼 공통 */
+
+.predict-btn {
+  margin-top: 20px;
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  font-weight: bold;
+  color: white;
+  background-color: var(--primary-color);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  grid-column: span 2;
+  transition: background-color 0.3s ease;
+}
+
+.predict-btn:hover {
+  background-color: var(--primary-hover);
+}
+
+
+
+
+/* === 돌아가기 버튼 공통 === */
+.back-btn {
+  display: block;
+  text-align: center;
+  margin-top: 30px;
+  text-decoration: none;
+  font-size: 16px;
+  color: #6a1b9a;
+  font-weight: bold;
+}
+.back-btn:hover {
+  color: #4a148c;
+}
+
+/* ===== MCI 입력 페이지 전용 레이아웃 보정 ===== */
+
+/* 페이지 컨테이너 여백 및 중앙 정렬 보조 */
+.container {
+  max-width: 1200px;            /* 전체 페이지의 최대 폭 */
+  margin: 0 auto;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;           /* 제목과 폼을 가로 중앙 정렬 */
+}
+
+/* 제목 영역: 폼 폭과 맞추고 중앙 정렬 */
+.container > h2 {
+  width: 100%;
+  max-width: 720px;              /* 제목 영역 폭을 폼과 동일하게 */
+  margin: 16px auto 12px;
+  text-align: center;            /* 텍스트 중앙 정렬 */
+  font-size: 24px;
+  font-weight: 700;
+  color: #1976d2;
+}
+
+/* 폼(이 페이지 전용) 폭 축소 + 중앙 정렬 + 그리드 */
+#predictForm {
+  width: 100%;
+  max-width: 720px;              /* 🔧 폼의 실제 폭: 필요시 640px로 더 줄여도 됨 */
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 140px 1fr; /* 라벨 140px, 입력 1열 */
+  gap: 14px 16px;
+  align-items: center;
+  background: #fff;
+  padding: 24px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.08);
+}
+
+/* 라벨 정렬 */
+#predictForm label {
+  text-align: right;
+  font-weight: 600;
+}
+
+/* 입력 요소 너비는 폼의 2열 폭을 따르게 */
+#predictForm input[type="number"],
+#predictForm select {
+  width: 100%;
+  max-width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+/* 라디오 그룹은 2열 전체에서 가로 배치 */
+#predictForm .radio-group {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  grid-column: 2 / 3;            /* 2열 영역에만 놓이도록 */
+}
+
+/* 제출 버튼은 폼 가로폭에 맞춰 전체 폭 */
+#predictForm .predict-btn {
+  grid-column: 1 / -1;           /* 두 컬럼 가로로 모두 차지 */
+  width: 100%;
+  margin-top: 10px;
+}
+
+/* 작은 화면 대응: 라벨 위/입력 아래로 세로 스택 */
+@media (max-width: 640px) {
+  #predictForm {
+    grid-template-columns: 1fr;  /* 한 열 */
+    padding: 16px;
+  }
+  #predictForm label {
+    text-align: left;
+  }
+  #predictForm .radio-group,
+  #predictForm .predict-btn {
+    grid-column: 1 / -1;         /* 한 열에서 전폭 유지 */
+  }
+  .container > h2 {
+    max-width: 100%;
+    font-size: 22px;
+  }
+}
+
+/* 숨김 공통 (form-row가 display: contents 여도 강제 숨김) */
+.hidden { display: none !important; }
+.form-row.hidden { display: none !important; }
+
+/* 에러 부분 위로 빼기*/
+#predictForm .form-errors--in-grid{
+  grid-column: 1 / -1;  /* ← 그리드 두 칼럼 모두 차지 */
+  margin-bottom: 6px;
+}

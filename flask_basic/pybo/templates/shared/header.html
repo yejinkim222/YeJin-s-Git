@@ -17,11 +17,11 @@
       </li>
 
       <li>
-        <a href="{{ url_for('disease.mci_input.html') }}">치매 예측 서비스</a>
+        <a href="{{ url_for('mci.create_input') }}">치매 예측 서비스</a>
         <ul class="dropdown">
           <!-- 하드코드 경로 대신 라우트 사용 권장 -->
           <li><a href="#">치매 예측</a></li>
-          <li><a href="{{ url_for('disease.mci_input.html') }}">MCI 예측</a></li>
+          <li><a href="{{ url_for('mci.create_input') }}">MCI 예측</a></li>
         </ul>
       </li>
 
@@ -34,7 +34,7 @@
         <a href="{{ url_for('genai.chat') }}">생성형 AI</a>
         <ul class="dropdown">
           <li><a href="{{ url_for('genai.chat') }}">AI 상담 챗봇</a></li>
-          <li><a href="{{ url_for('genai.screen') }}">인지 스크리닝 대화</a></li>
+          <li><a href="{{ url_for('genai.bot_view') }}">인지 스크리닝 대화</a></li>
         </ul>
       </li>
 

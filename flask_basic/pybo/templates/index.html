@@ -1,5 +1,10 @@
 {% extends 'base.html' %}
 
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}" />
+{% endblock %}
+
+
 {% block content %}
 <section class="main-page slider">
   <!-- 슬라이드 이미지들 -->
@@ -123,7 +128,9 @@
     </div>
   </div>
 </section>
+{% endblock %}
 
+{% block scripts %}
 <!-- 슬라이더 JS -->
 <script src="{{ url_for('static', filename='js/slider.js') }}"></script>
 {% endblock %}

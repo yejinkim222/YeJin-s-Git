@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/genai/genai_audio.css') }}">
+
+<div class="genai-chat-wrap">
+  <h2 class="chat-title">인지 스크리닝 대화(음성)</h2>
+
+  <!-- 대화 영역 -->
+  <div id="chat" class="chat-shell">
+    <ul id="chatList" class="chat-list">
+      <li class="msg bot">
+        <div class="bubble bot">안녕하세요! 가볍게 이야기 나누며 최근 기억력·집중력을 살펴볼게요.
+준비되면 ‘녹음’으로 말씀하시고, ‘보내기’를 눌러 주세요.</div>
+      </li>
+      <li class="msg bot">
+        <div class="bubble bot">오늘 하루는 어떻게 보내셨어요?</div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- 음성 인식 결과/수정 -->
+  <label for="recognized" class="sr-label">인식된 답변 (필요하면 수정하세요)</label>
+  <textarea id="recognized" class="chat-input" placeholder="여기에 음성 인식 결과가 표시됩니다."></textarea>
+
+  <!-- 컨트롤 -->
+  <div class="screen-controls">
+    <button id="btnStart"  class="btn">새 대화</button>
+    <button id="btnRec"    class="btn btn-secondary">녹음</button>
+
+    <div class="controls-right">
+      <span id="timeLeft" class="time-left">남은 시간 60s</span>
+      <button id="btnExtend" class="btn btn-outline">+30초</button>
+      <button id="btnSend"   class="btn">보내기</button>
+    </div>
+  </div>
+
+  <p class="notice">※ 이 도구는 교육·연구용 참고도구이며, 의학적 진단이 아닙니다.</p>
+</div>
+
+<script src="{{ url_for('static', filename='js/genai_js/genai_audio.js') }}"></script>
+{% endblock %}

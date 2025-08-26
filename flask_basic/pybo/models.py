@@ -4,6 +4,10 @@ from sqlalchemy.orm import backref
 
 from pybo import db
 
+from sqlalchemy import Sequence
+
+
+
 class InputData(db.Model):
     __tablename__ = 'input_data' # 사용자 입력값 저장 테이블
 
@@ -82,8 +86,8 @@ class Conversation(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
     session_key = db.Column(db.String(64), nullable=True, index=True)  # 게스트 식별
     title = db.Column(db.String(200))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now())
+    updated_at = db.Column(db.DateTime, default=datetime.now(), onupdate=datetime.now())
 
     messages = db.relationship(
         "Message",
@@ -98,4 +102,42 @@ class Message(db.Model):
     conversation_id = db.Column(db.Integer, db.ForeignKey('conversations.id'), nullable=False, index=True)
     role = db.Column(db.String(16), nullable=False)  # "user" | "assistant" | "system"
     content = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now())
+
+
+class ScreeningResult(db.Model):
+    """인지 스크리닝 1회 결과를 한 행에 저장하는 평탄 테이블."""
+    __tablename__ = "screening_result"
+
+    # 시퀀스 생성
+    id = db.Column(db.Integer, db.Sequence('data_seq', start=1, increment=1),primary_key=True)
+
+    # FK: Users.username(문자열) 참조
+    user_username = db.Column(
+        db.String(150),
+        db.ForeignKey("users.username"),
+        nullable=False,
+        index=True,
+        doc="Users.username FK",
+    )
+
+    # 타임스탬프
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    finished_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # 집계/요약
+    total_score   = db.Column(db.Integer, nullable=False, default=0)
+    max_score     = db.Column(db.Integer, nullable=False, default=16)
+    result_summary = db.Column(db.String(128), nullable=False)   # 예: 정상 범위 / 주의 필요 / 의심됨
+    need_referral  = db.Column(db.Boolean, default=False)        # 전문상담 권고 여부
+    advice         = db.Column(db.Text)                          # 권고 문구(선택)
+
+    # 최종 결과 텍스트
+    result_text     = db.Column(db.Text, nullable=False, default="")
+
+    user = db.relationship(
+        Users,
+        primaryjoin="ScreeningResult.user_username == Users.username",
+        backref=backref("screenings_flat", lazy=True),
+        viewonly=False,
+    )

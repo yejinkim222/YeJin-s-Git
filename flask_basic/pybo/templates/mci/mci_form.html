@@ -1,4 +1,9 @@
-{% extends 'mci/mci_input.html' %}
+{% extends 'base.html' %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/mci/mci_form.css') }}">
+{% endblock %}
+
 {% block content %}
 <div class="container">
     <h2>MCI 예측 정보 입력</h2>

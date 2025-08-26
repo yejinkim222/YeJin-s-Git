@@ -13,7 +13,7 @@ def disease_home():
     """질병 정보 허브 페이지."""
     return render_template("disease/disease.html")
 
-@bp.route("/disease/voice")
+@bp.route("/disease/audio")
 def disease_voice():
     """질병 정보 > 자가검사(음성) 페이지."""
     return render_template("disease/disease_voice.html")

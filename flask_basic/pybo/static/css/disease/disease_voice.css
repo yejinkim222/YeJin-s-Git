@@ -1,0 +1,105 @@
+/* ===== 인지 스크리닝(음성) 페이지 전용 보강 ===== */
+
+/* mci_input 그리드 영향 차단 */
+#screenForm{ display:block !important; grid-template-columns:none !important; }
+#screenForm .genai-chat-wrap{ grid-column:1 / -1 !important; }
+
+/* 레이아웃 컨테이너 */
+.container{
+  max-width: 960px;
+  margin: 24px auto;
+  padding: 0 20px;
+}
+
+/* 카드 래퍼 */
+.genai-chat-wrap{
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+/* 카드 */
+.screen-box{
+  background:#fff;
+  border-radius:12px;
+  padding:20px;
+  box-shadow:0 6px 18px rgba(0,0,0,.08);
+  border:1px solid #eef2f2;
+}
+
+/* 로그 창 */
+.log{
+  height:360px;
+  overflow:auto;
+  border:1px solid #e6e6e6;
+  border-radius:10px;
+  padding:14px;
+  background:#fbfbfb;
+
+  /* 글자 세로깨짐 방지 */
+  white-space:pre-wrap;
+  word-break:keep-all;
+  overflow-wrap:break-word;
+  line-height:1.55;
+  font-size:15px;
+}
+
+/* 메시지 한 줄 */
+.msg-row{ margin:6px 0; }
+.msg-row .role{ font-weight:700; color:#00695c; margin-right:4px; }
+
+/* 답변 입력 */
+.answer-wrap{ margin-top:12px; }
+.answer-wrap label{ display:block; font-weight:600; margin-bottom:6px; }
+#answerBox{
+  width:100%;
+  min-height:78px;
+  resize:vertical;
+  border:1px solid #e2e8e8;
+  border-radius:10px;
+  padding:10px 12px;
+  background:#fff;
+  font-size:15px;
+}
+
+/* 버튼 줄 */
+.actions{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-top:12px;
+}
+.actions .left{ display:flex; align-items:center; gap:8px; }
+.countdown{ font-size:.95rem; color:#0a7b34; padding:0 8px; }
+
+/* 버튼 공통 */
+.btn{
+  appearance:none;
+  border:none;
+  border-radius:10px;
+  padding:10px 14px;
+  font-weight:700;
+  cursor:pointer;
+  background:#e8f5f3;
+  color:#004d40;
+  transition:.15s ease;
+}
+.btn:hover{ filter:brightness(.96); }
+
+/* 기본/주요/보조 */
+.btn-primary{ background:var(--primary-color); color:#fff; }
+.btn-primary:hover{ background:var(--primary-hover); }
+
+.btn-secondary{ background:var(--cancel-color); color:#fff; }
+.btn-secondary:hover{ background:var(--cancel-hover); }
+
+/* 비활성 */
+.btn:disabled{ opacity:.45; cursor:not-allowed; }
+
+/* 반응형 */
+@media (max-width: 680px){
+  .screen-box{ padding:16px; }
+  .log{ height:300px; }
+  .actions{ flex-direction:column; align-items:stretch; }
+  .actions .left{ justify-content:space-between; }
+}
