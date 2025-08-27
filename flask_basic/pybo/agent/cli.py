@@ -2,7 +2,7 @@
 from __future__ import annotations
 import click
 from flask import current_app
-from pybo.rag.rag import rag_sync_env_pdf_dir
+from pybo.rag.engine import rag_sync_env_pdf_dir
 
 def register_cli(app):
     @app.cli.command("rag.sync")

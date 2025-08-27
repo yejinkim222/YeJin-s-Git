@@ -1,10 +1,19 @@
 /* ===== 인지 스크리닝 대화 전용 ===== */
 
-/* 페이지 전체 여백 + 가운데 정렬 */
+/* 제목 */
+.genai-chat-wrap .chat-title {
+  width: 100%;
+  max-width: 720px;
+  margin: 16px auto 12px;
+  text-align: center;
+  font-size: 24px;
+  font-weight: 700;
+  color: #1976d2;
+}
 .genai-chat-wrap {
-  max-width: 920px;            /* 데스크톱에서 너무 넓지 않게 */
-  margin: 28px auto 56px;      /* 상/하 여백 확장, 좌우 가운데 정렬 */
-  padding: 0 24px;             /* 양쪽 내부 여백(모바일에서 체감) */
+  max-width: 960px;
+  margin: 24px auto;
+  padding: 0 20px;
 }
 
 /* 타이틀 간격 */

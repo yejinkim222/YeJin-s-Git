@@ -1,11 +1,10 @@
-/* ========= Base layout only (header/nav/main/footer) ========= */
-
-/* 색 변수 */
+/* 전역 변수 */
 :root{
   --primary-color:#26a69a;
   --primary-hover:#1a776f;
   --cancel-color:#6faea9;
   --cancel-hover:#599d97;
+  --header-h: 120px;
 }
 
 /* 리셋/베이스 */
@@ -31,7 +30,7 @@ header {
   width: 100%; /*너비고정*/
   position: relative;
   z-index: 9999;
-  height: 100px;      /* 로고와 메뉴상단바 두께 조정*/
+  height: var(--header-h);
   background: #014c40;
   color: #fff;
   display: flex;
@@ -42,7 +41,7 @@ header {
 .logo a{
   font-weight: bold;
   font-size: 32px;
-  line-height: 80px;   /*헤더와 상단 두께 맞추기 */
+  line-height: var(--header-h);   /*헤더와 상단 두께 맞추기 */
   color: #ffffff;
   cursor: pointer;
 }
@@ -169,7 +168,7 @@ nav ul li ul li a:hover{
 main{
   flex:1 0 auto;
   width:100%;
-  padding:24px 0;     /* 페이지별 컨테이너에서 좌우 패딩 처리 */
+  padding:0px;     /* 페이지별 컨테이너에서 좌우 패딩 처리 */
 }
 
 /* -------- Footer -------- */

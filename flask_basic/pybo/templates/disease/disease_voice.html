@@ -1,14 +1,12 @@
 {% extends 'base.html' %}
 
-
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/disease_voice.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/disease/disease_voice.css') }}" />
 {% endblock %}
-
 
 {% block content %}
 <div class="container">
-  <h2>인지 스크리닝 대화(음성)</h2>
+  <h2>AI 자가 진단 대화(음성)</h2>
 
   <form id="screenForm" method="post" onsubmit="return false;">
     {# Flask-WTF CSRF 사용 중이면 자동 삽입 #}
@@ -26,11 +24,9 @@
     <div class="genai-chat-wrap">
       <div class="screen-box" id="screenBox" data-api="{{ url_for('disease.ad8_step') }}">
         <div id="log" class="log">
-          <div class="msg-row">
-            <span class="role">SolCare:</span>
-            간단한 문답으로 최근 인지 상태를 살펴봅니다. 의료 진단이 아니며, 결과는 참고용입니다.
+          <div class="msg-row assistant">
+            <div class="msg-bubble">간단한 문답으로 최근 인지 상태를 살펴봅니다. 의료 진단이 아니며, 결과는 참고용입니다.</div>
           </div>
-          {# 첫 질문은 시작 버튼 클릭 시 서버에서 내려옴 #}
         </div>
 
         <div class="answer-wrap">
@@ -62,6 +58,5 @@
 {% endblock %}
 
 {% block scripts %}
-{# 최신 JS 강제 로드 (캐시 버스터) #}
-<script src="{{ url_for('static', filename='js/disease.js', v='6') }}"></script>
+<script src="{{ url_for('static', filename='js/disease_voice.js') }}"></script>
 {% endblock %}

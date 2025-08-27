@@ -5,7 +5,7 @@ from typing import List, Dict, Tuple, Callable, Optional
 from flask import current_app
 
 from .registry import calc, web_search_links, local_upsert_text
-from pybo.rag.rag import rag_search_snippets
+from pybo.rag.engine import rag_search_snippets
 
 __all__ = ["agent_run"]
 

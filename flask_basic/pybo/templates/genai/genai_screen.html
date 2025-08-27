@@ -1,8 +1,10 @@
 {% extends "base.html" %}
-{% block content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/genai/genai_audio.css') }}">
 
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/genai/genai_audio.css') }}">
+{% endblock %}
+
+{% block content %}
 <div class="genai-chat-wrap">
   <h2 class="chat-title">인지 스크리닝 대화(음성)</h2>
 
@@ -37,6 +39,8 @@
 
   <p class="notice">※ 이 도구는 교육·연구용 참고도구이며, 의학적 진단이 아닙니다.</p>
 </div>
+{% endblock %}
 
+{% block scripts %}
 <script src="{{ url_for('static', filename='js/genai_js/genai_audio.js') }}"></script>
 {% endblock %}

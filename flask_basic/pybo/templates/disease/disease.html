@@ -6,7 +6,7 @@
 
 {% block content %}
 <section class="disease-wrapper">
-  <nav class="sidebar disease-sidebar">
+  <aside class="sidebar disease-sidebar">
     <h3>치매</h3>
     <ul>
       <li data-target="dementia-what">치매란?</li>
@@ -20,9 +20,9 @@
       <li data-target="mci-symptoms">경도 인지 장애 증상</li>
     </ul>
     <a href="{{ url_for('main.index') }}" class="back-btn">◀ 돌아가기</a>
-  </nav>
+  </aside>
 
-  <main class="content">
+  <div class="content">
     <div class="content-card">
       <section id="dementia-what">
         <h2 class="icon-title">질병 정보 - 치매</h2>
@@ -47,6 +47,11 @@
         <br>
         <p>이 선별 검사는 정식 진단이 아닙니다.</p>
         <p>2점 이상인 경우, 전문의 상담 및 정밀 검사가 필요합니다.</p>
+        <br>
+        <p>AI 자가 진단 페이지에서 음성을 통해 검사해볼 수 있습니다.</p>
+        <p>링크:
+          <a href="{{ url_for('main.disease_voice') }}" rel="noopener">AI 자가 진단(음성)</a>
+        </p>
       </section>
 
       <section id="dementia-symptoms">
@@ -99,7 +104,7 @@
         <p>가족/주변인도 인지할 정도 변화</p>
       </section>
     </div>
-  </main>
+  </div>
 </section>
 {% endblock %}
 

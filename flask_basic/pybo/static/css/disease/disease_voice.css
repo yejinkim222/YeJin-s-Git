@@ -1,5 +1,16 @@
 /* ===== 인지 스크리닝(음성) 페이지 전용 보강 ===== */
 
+/* 제목 영역: 폼 폭과 맞추고 중앙 정렬 */
+.container > h2 {
+  width: 100%;
+  max-width: 720px;              /* 제목 영역 폭을 폼과 동일하게 */
+  margin: 16px auto 12px;
+  text-align: center;            /* 텍스트 중앙 정렬 */
+  font-size: 24px;
+  font-weight: 700;
+  color: #1976d2;
+}
+
 /* mci_input 그리드 영향 차단 */
 #screenForm{ display:block !important; grid-template-columns:none !important; }
 #screenForm .genai-chat-wrap{ grid-column:1 / -1 !important; }
@@ -28,28 +39,58 @@
 
 /* 로그 창 */
 .log{
-  height:360px;
-  overflow:auto;
-  border:1px solid #e6e6e6;
-  border-radius:10px;
-  padding:14px;
-  background:#fbfbfb;
-
-  /* 글자 세로깨짐 방지 */
-  white-space:pre-wrap;
-  word-break:keep-all;
-  overflow-wrap:break-word;
-  line-height:1.55;
-  font-size:15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;               /* 메시지 사이 간격 */
+  padding: 16px 18px;      /* 위/좌/우 동일한 느낌으로 */
+  height: 360px;
+  overflow: auto;
+  border: 1px solid #e6e6e6;
+  border-radius: 10px;
+  background: #fbfbfb;
+  white-space: pre-wrap;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  line-height: 1.55;
+  font-size: 15px;
 }
 
-/* 메시지 한 줄 */
-.msg-row{ margin:6px 0; }
+/* 메시지 row: 좌/우 정렬 */
+.msg-row{ display:flex; }
+.msg-row.assistant{ justify-content: flex-start; }
+.msg-row.user{ justify-content: flex-end; }
+
 .msg-row .role{ font-weight:700; color:#00695c; margin-right:4px; }
+
+/* 말풍선 공통 */
+.msg-bubble{
+  max-width: 86%;
+  padding: 10px 14px;
+  border-radius: 14px;
+  box-shadow: 0 1px 0 rgba(0,0,0,.04);
+}
+
+/* 왼쪽(SolCare) 말풍선 */
+.msg-row.assistant .msg-bubble{
+  background: #f1faf8;
+  border: 1px solid #d6ebe6;
+  color: #064e44;
+  border-top-left-radius: 6px;
+}
+
+/* 오른쪽(사용자) 말풍선 */
+.msg-row.user .msg-bubble{
+  background: var(--primary-color);
+  color: #fff;
+  border: none;
+  border-top-right-radius: 6px;
+}
 
 /* 답변 입력 */
 .answer-wrap{ margin-top:12px; }
+
 .answer-wrap label{ display:block; font-weight:600; margin-bottom:6px; }
+
 #answerBox{
   width:100%;
   min-height:78px;
@@ -98,8 +139,13 @@
 
 /* 반응형 */
 @media (max-width: 680px){
+  .msg-bubble{ max-width: 92%; }
+  .log{ height: 300px; padding: 14px; }
   .screen-box{ padding:16px; }
   .log{ height:300px; }
   .actions{ flex-direction:column; align-items:stretch; }
   .actions .left{ justify-content:space-between; }
 }
+/* 카드와 입력영역의 여백도 조금 넉넉히 */
+.screen-box{ padding: 24px; }
+.answer-wrap{ margin-top: 16px; }

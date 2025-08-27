@@ -6,7 +6,7 @@ from typing import Any, Dict, Callable, Tuple
 from flask import current_app
 
 # RAG 툴 (이미 구현된 함수 재사용)
-from pybo.rag.rag import (
+from pybo.rag.engine import (
     rag_search_snippets,
     rag_upsert_texts,
 )

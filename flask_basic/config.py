@@ -60,6 +60,8 @@ RAG_CRAWL_DEPTH = int(getenv("RAG_CRAWL_DEPTH", 1))
 RAG_MAX_PAGES_PER_HOST = int(getenv("RAG_MAX_PAGES_PER_HOST", 20))
 RAG_RESPECT_ROBOTS = str(getenv("RAG_RESPECT_ROBOTS","true")).lower()=="true"
 RAG_RATE_LIMIT_PER_HOST = float(getenv("RAG_RATE_LIMIT_PER_HOST", 0.5))
+RAG_MAX_CHARS = 2800
+
 
 # --- RAG / Chroma 기본값 & ENV 매핑 ---
 RAG_PDF_DIR = os.getenv("RAG_PDF_DIR", "")  # 비워두면 동기화 스킵
@@ -69,7 +71,8 @@ RAG_CHROMA_DIR = os.getenv(
 )
 
 # bot 토글
-BOT_RAG_MODE   = getenv("BOT_RAG_MODE", "false")
+BOT_RAG_MODE   = getenv("BOT_RAG_MODE", "true")
 BOT_AGENT_MODE = getenv("BOT_AGENT_MODE", "false")
 BOT_MAX_DISPLAY_CHARS = 500         # 일반 챗 표시 길이
 BOT_MAX_DISPLAY_CHARS_RAG = 900     # RAG/에이전트 표시 길이
+

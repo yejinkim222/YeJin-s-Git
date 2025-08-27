@@ -4,8 +4,13 @@ from __future__ import annotations
 import json
 import re
 import html
+import os
+import secrets
 from types import SimpleNamespace
 from typing import Dict, List, Optional, Any
+
+from functools import lru_cache
+from time import perf_counter
 
 from flask import (
     Blueprint, render_template, request, session, current_app,
@@ -15,9 +20,15 @@ from flask import (
 from pybo import db
 from pybo.models import Conversation, Message, ScreeningResult
 
+from langchain_ollama import ChatOllama
+
+try:
+    from langchain_core.runnables import RunnableConfig
+except Exception:
+    RunnableConfig = dict
+
 
 bp = Blueprint("genai", __name__, url_prefix="/genai")
-
 
 # =========================================================
 # 공통 유틸 ― 로그인/세션
@@ -25,17 +36,159 @@ bp = Blueprint("genai", __name__, url_prefix="/genai")
 def _is_logged_in() -> bool:
     return getattr(g, "user", None) is not None
 
-
 def _to_int(x: Any, default: int = 0) -> int:
-    """mypy/pylance 경고 없이 안전하게 정수 변환."""
     try:
         return int(x)
     except Exception:
         return default
 
+def _session_id() -> str:
+    """로그인/게스트 공용 안정 세션ID"""
+    if _is_logged_in():
+        return f"user:{g.user.id}"
+    sid = session.get("_sid")
+    if not sid:
+        sid = secrets.token_hex(8)
+        session["_sid"] = sid
+    return f"guest:{sid}"
+
+# === 응답 길이 결정 유틸 ===
+_DETAIL_RE = re.compile(r"(자세히|상세히|상세하게|자세하게|더\s*길게|길게|디테일|세부|구체|설명\s*좀|detailed|in\s*detail)", re.I)
+
+def _decide_answer_length(user_text: str) -> tuple[int, int, bool]:
+    """
+    반환: (이번 턴 목표 글자수, 상세 모드 글자수, 상세요청 여부)
+    - 기본: LENGTH_BASE_CHARS(기본 150)
+    - 상세요청: LENGTH_DETAIL_CHARS(기본 300)
+    """
+    base_chars = int(current_app.config.get("LENGTH_BASE_CHARS", 150))
+    detail_chars = int(current_app.config.get("LENGTH_DETAIL_CHARS", 300))
+    want_detail = bool(_DETAIL_RE.search(user_text or ""))
+    return (detail_chars if want_detail else base_chars, detail_chars, want_detail)
+
+
+# --- RAG 지연 로딩 + 캐시 ---
+def _load_rag_impl():
+    try:
+        from pybo.rag import rag_search_snippets
+        return rag_search_snippets
+    except Exception as e:
+        current_app.logger.warning("RAG impl load failed: %s", e)
+        return None
+
+@lru_cache(maxsize=128)
+def _rag_search_cached(query: str, top_k: int = 3):
+    impl = _load_rag_impl()
+    if not impl:
+        return None
+    try:
+        return impl(query, top_k=top_k)
+    except Exception as e:
+        current_app.logger.warning("RAG search failed: %s", e)
+        return None
 
 # =========================================================
-# 상담 챗봇 (/genai/chat)
+# LangChain 메모리(가능 시)
+# =========================================================
+try:
+    from langchain_core.chat_history import InMemoryChatMessageHistory
+    from langchain_core.runnables.history import RunnableWithMessageHistory
+    from langchain_openai import ChatOpenAI
+    from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
+    _LC_OK = True
+except Exception:
+    _LC_OK = False
+
+_LC_STORE: dict[str, "InMemoryChatMessageHistory"] = {}
+
+
+def _get_lc_with_memory():
+    """
+    LangChain 메모리 가능 시 RunnableWithMessageHistory 반환.
+    - GENAI_PROVIDER == "ollama" → ChatOllama 사용(권장, 키 불필요)
+    - 그 외(OpenAI 등) → 환경변수로 키 주입 후 ChatOpenAI 사용(키워드 인자 절대 안 넘김)
+    - 실패 시 None
+    """
+    if not _LC_OK:
+        return None
+
+    provider = (current_app.config.get("GENAI_PROVIDER", "ollama") or "ollama").lower()
+    llm = None
+
+    try:
+        if provider == "ollama":
+            # Ollama 경로
+            from langchain_community.chat_models import ChatOllama
+            llm = ChatOllama(
+                base_url=str(current_app.config.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434")).rstrip("/"),
+                model=current_app.config.get("OLLAMA_MODEL", "llama3.1:8b-instruct-q5_K_M"),
+                temperature=float(current_app.config.get("GENAI_TEMPERATURE", 0.2)),
+                top_p=float(current_app.config.get("GENAI_TOP_P", 0.85)),
+                # num_ctx/num_predict는 여기 안 넣고 서버 옵션에 맞춤. 필요 시 아래 주석 해제
+                # num_ctx=int(current_app.config.get("OLLAMA_NUM_CTX", 4096)),
+                # num_predict=int(current_app.config.get("GENAI_MAX_NEW_TOKENS", 160)),
+            )
+        else:
+            # OpenAI 경로
+            key = current_app.config.get("OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY")
+            if not key:
+                return None
+            os.environ["OPENAI_API_KEY"] = key
+
+            from langchain_openai import ChatOpenAI
+            model_name = current_app.config.get("OPENAI_MODEL", "gpt-4o-mini")
+            llm = ChatOpenAI(
+                model=model_name,
+                temperature=float(current_app.config.get("GENAI_TEMPERATURE", 0.2)),
+                top_p=float(current_app.config.get("GENAI_TOP_P", 0.85)),
+            )
+
+    except Exception as e:
+        current_app.logger.warning("LLM (memory path) init failed: %s", e)
+        return None
+
+    if llm is None:
+        return None
+
+    def get_hist(session_id: str):
+        if session_id not in _LC_STORE:
+            _LC_STORE[session_id] = InMemoryChatMessageHistory()
+        return _LC_STORE[session_id]
+
+    return RunnableWithMessageHistory(llm, get_hist)
+
+
+def _gen_with_optional_memory(system: str, history: list[dict], max_new: int = 180) -> str:
+    """
+    LangChain 메모리 가능하면 그 경로로, 아니면 기존 LLM(get_llm) 경로로.
+    history: [{"role":"user"|"assistant","content":"..."}...]
+    """
+    sid = _session_id()
+    with_mem = _get_lc_with_memory()
+    if with_mem:
+        msgs = [{"role": "system", "content": system}] + history
+        lmsgs = []
+        for m in msgs:
+            r, c = m.get("role"), (m.get("content") or "")
+            if r == "system":
+                lmsgs.append(SystemMessage(content=c))
+            elif r == "user":
+                lmsgs.append(HumanMessage(content=c))
+            else:
+                lmsgs.append(AIMessage(content=c))
+        try:
+            # ▼ config 인자 타입 경고 없이 설정
+            resp = with_mem.with_config(configurable={"session_id": sid}).invoke(lmsgs)
+            out = getattr(resp, "content", None) or str(resp) or ""
+            return out.strip()
+        except Exception as e:
+            current_app.logger.warning("LangChain memory path failed: %s", e)
+
+    # fallback: 기존 LLM
+    return _generate(get_llm(), [{"role": "system", "content": system}] + history, max_new_tokens=max_new).strip()
+
+# =========================================================
+# 상담 챗봇 이력 로드/저장 (로그인/게스트 공용)
 # =========================================================
 def _get_or_create_user_chat() -> Conversation:
     conv = (
@@ -50,15 +203,59 @@ def _get_or_create_user_chat() -> Conversation:
         db.session.commit()
     return conv
 
-
 def _guest_chat_msgs() -> List[Dict[str, str]]:
     return session.get("chat_guest_messages", [])
-
 
 def _save_guest_chat_msgs(msgs: List[Dict[str, str]]) -> None:
     session["chat_guest_messages"] = msgs
 
+def _load_counsel_history() -> tuple[list[dict], Optional[Conversation]]:
+    if _is_logged_in():
+        conv = _get_or_create_user_chat()
+        last_k = int(current_app.config.get("GENAI_MAX_CTX_MESSAGES", 16))
+        msgs = (
+            Message.query
+            .filter_by(conversation_id=conv.id)
+            .order_by(Message.created_at.desc())
+            .limit(last_k)
+            .all()
+        )
+        msgs = list(reversed(msgs))
+        hist = [{"role": m.role, "content": m.content} for m in msgs]
+        return hist, conv
+    else:
+        return _guest_chat_msgs(), None
 
+def _save_counsel_turn(user_text: str, answer: str, conv: Optional[Conversation]) -> None:
+    if conv:
+        db.session.add(Message(conversation_id=conv.id, role="user", content=user_text))
+        db.session.add(Message(conversation_id=conv.id, role="assistant", content=answer))
+        db.session.commit()
+    else:
+        h = _guest_chat_msgs()
+        h.append({"role": "user", "content": user_text})
+        h.append({"role": "assistant", "content": answer})
+        _save_guest_chat_msgs(h)
+
+def _handle_dialog_turn(system: str, user_text: str, max_new: int = 180) -> str:
+    """중복 제거용: 상담 챗봇 한 턴 처리"""
+    hist, conv = _load_counsel_history()
+    hist_for_llm = hist + [{"role": "user", "content": user_text}]
+    answer = _gen_with_optional_memory(system, hist_for_llm, max_new=max_new) \
+        or "잠시 후 다시 시도해 주세요."
+    _save_counsel_turn(user_text, answer, conv)
+    return answer
+
+def _summarize_messages_for_db(msgs: list[dict], max_new: int = 240) -> str:
+    if not msgs:
+        return ""
+    transcript = "\n".join(f"{m['role']}: {m['content']}" for m in msgs[-30:])
+    prompt = "다음 대화를 5줄 이내 한국어로 요약하세요. 이름/개인식별 정보는 제외하고 핵심만:\n" + transcript
+    return _generate(get_llm(), [{"role": "user", "content": prompt}], max_new_tokens=max_new)
+
+# =========================================================
+# 상담 챗봇 뷰 (/genai/chat)
+# =========================================================
 @bp.route("/chat", methods=["GET", "POST"])
 def chat():
     # --- GET: reset 처리 ---
@@ -75,60 +272,13 @@ def chat():
             system = (
                 "너는 한국어로 편안하게 대화하는 상담사다. 검사용 문항(기억 단어 제시, 계산, 점수/진단 언급)은 절대 하지 말라. "
                 "모르는 것은 잘 모르겠다, 죄송하다 하고 화제전환한다. "
-                "항상 1–2문장으로 공감→짧은 질문 순으로 말한다. 같은 질문을 두 번 실패하면 다른 화제로 전환한다. "
-                "대화 전환 규칙:\n"
-                " - [회피/거부]('몰라','모르겠어','그냥 그래' 등): 허용·공감 후 '선택지 제시' 또는 '감각 단서(보이는 것/먹은 것/날씨)'로 좁혀 묻는다.\n"
-                " - [반복/고집] 같은 내용이 2회 반복되면 요약 한 문장 후 화제를 옮긴다(예: 오늘 식사/창밖/TV/가까운 사람).\n"
-                " - [혼란/막힘] 말이 막히면 질문을 더 구체화하고 예시 2개만 제시한다(예: 산책/TV처럼). '왜' 질문은 피하고 '무엇/어떻게' 위주로 묻는다.\n"
-                " - [부정 감정] 짧게 정서 반영 후 선택지 2개로 묻는다(지금은 쉬고 싶은지, 가벼운 얘기를 이어갈지).\n"
-                "스타일: 존댓말, 따뜻하고 단정한 어조, 의료·진단 표현 금지. 매 턴 끝에 부드러운 후속 질문 1개만."
+                "항상 1–2문장으로 공감→짧은 질문 순으로 말한다. 같은 질문을 두 번 실패하면 다른 화제로 전환한다."
             )
+            _ = _handle_dialog_turn(system, text, max_new=180)
 
-            if _is_logged_in():
-                conv = _get_or_create_user_chat()
-                last_k = int(current_app.config.get("GENAI_MAX_CTX_MESSAGES", 16))
-                msgs = (
-                    Message.query
-                    .filter_by(conversation_id=conv.id)
-                    .order_by(Message.created_at.desc())
-                    .limit(last_k)
-                    .all()
-                )
-                msgs = list(reversed(msgs))
-                history = [{"role": m.role, "content": m.content} for m in msgs]
-                history.append({"role": "user", "content": text})
-
-                llm = get_llm()
-                answer = _generate(
-                    llm,
-                    [{"role": "system", "content": system}] + history,
-                    max_new_tokens=180,
-                ) or "도움이 될 만한 이야기를 조금 더 들려주실래요?"
-
-                db.session.add(Message(conversation_id=conv.id, role="user", content=text))
-                db.session.add(Message(conversation_id=conv.id, role="assistant", content=answer))
-                db.session.commit()
-
-            else:
-                history = _guest_chat_msgs()
-                history.append({"role": "user", "content": text})
-
-                llm = get_llm()
-                answer = _generate(
-                    llm,
-                    [{"role": "system", "content": system}] + history,
-                    max_new_tokens=180,
-                ) or "혹시 더 나눠보고 싶은 주제가 있을까요?"
-
-                history.append({"role": "assistant", "content": answer})
-                _save_guest_chat_msgs(history)
-
-
-        # 폼 전송이면 리다이렉트, JSON이면 JSON 응답도 가능하지만 현 템플릿은 폼 기준
         if request.is_json:
             return jsonify(ok=True), 200
         return redirect(url_for("genai.chat"))
-
 
     # --- GET 렌더 ---
     if _is_logged_in():
@@ -145,7 +295,6 @@ def chat():
             messages=view_msgs,
             conversation=conv,
             is_guest=False,
-            # 이 페이지에서의 전송/리셋 주소
             post_url=url_for("genai.chat"),
             reset_url=url_for("genai.chat") + "?reset=1",
             bot_mode_rag=False,
@@ -159,13 +308,11 @@ def chat():
             messages=guest_msgs,
             conversation=fake_conv,
             is_guest=True,
-            # 이 페이지에서의 전송/리셋 주소
             post_url=url_for("genai.chat"),
             reset_url=url_for("genai.chat") + "?reset=1",
             bot_mode_rag=False,
             bot_mode_agent=False,
         )
-
 
 # =========================================================
 # 인지 스크리닝 화면 (/genai/audio)
@@ -173,7 +320,6 @@ def chat():
 @bp.route("/audio", methods=["GET"])
 def audio():
     return render_template("genai/genai_audio.html")
-
 
 # =========================================================
 # LLM 어댑터 (지연 import / 로컬·Gemini 겸용)
@@ -188,7 +334,7 @@ def _make_openai_compat_chat(base_url: str, model: str):
     def _chat(messages: list[dict], **gen_kwargs) -> str:
         import requests
 
-        timeout_sec = int(current_app.config.get("GENAI_HTTP_TIMEOUT_SEC", 180))
+        timeout_sec = int(current_app.config.get("GENAI_HTTP_TIMEOUT_SEC", 120))
         max_new = int(gen_kwargs.get(
             "max_new_tokens",
             current_app.config.get("GENAI_MAX_NEW_TOKENS", 120),
@@ -202,6 +348,13 @@ def _make_openai_compat_chat(base_url: str, model: str):
             "top_p": float(current_app.config.get("GENAI_TOP_P", 0.85)),
             "max_tokens": max_new,
             "stream": False,
+            "keep_alive": current_app.config.get("OLLAMA_KEEP_ALIVE", "30m"),
+        }
+        payload["extra_body"] = {
+            "options": {
+                "num_ctx": int(current_app.config.get("OLLAMA_NUM_CTX", 4096)),
+                "num_predict": max_new,
+            }
         }
         if stop:
             payload["stop"] = stop
@@ -229,21 +382,17 @@ def _make_openai_compat_chat(base_url: str, model: str):
 
     return _chat
 
-
 def _get_ollama_loader():
     base = (current_app.config.get("OLLAMA_BASE_URL") or "http://127.0.0.1:11434").rstrip("/")
     model = current_app.config.get("OLLAMA_MODEL", "llama3.1:8b-instruct-q5_K_M")
     return SimpleNamespace(chat=_make_openai_compat_chat(base, model))
-
 
 def _get_llamacpp_loader():
     base = (current_app.config.get("LLAMACPP_BASE_URL") or "http://127.0.0.1:8080").rstrip("/")
     model = current_app.config.get("LLAMACPP_MODEL", "local-llama")
     return SimpleNamespace(chat=_make_openai_compat_chat(base, model))
 
-
 def _get_gemini_loader():
-    """Google Generative AI 어댑터 (타입 경고 없이 GenerationConfig 사용)"""
     import google.generativeai as genai
     from google.api_core.exceptions import ResourceExhausted
 
@@ -309,7 +458,6 @@ def _get_gemini_loader():
 
     return _Gemini()
 
-
 def get_llm():
     """앱 단위 LLM 인스턴스를 캐시해 반환한다."""
     store = current_app.extensions.setdefault("llm_store", {})
@@ -330,7 +478,6 @@ def get_llm():
         store[key] = _get_gemini_loader()
     return store[key]
 
-
 # =========================================================
 # 생성/후처리 유틸
 # =========================================================
@@ -338,7 +485,6 @@ _HEAD_LABEL_RE = re.compile(r"(?mi)^(?:Assistant|User|System|SolCare)\s*:\s*")
 _LABEL_PREFIX_RE = re.compile(r"(?mi)^(?:Korean|한국어|English|영어)\s*:\s*")
 _TRAIL_WS_NL_RE = re.compile(r"\s+\n")
 _MULTI_NL_RE = re.compile(r"\n{3,}")
-
 
 def _light_clean(text: str) -> str:
     if not text:
@@ -349,13 +495,36 @@ def _light_clean(text: str) -> str:
     t = _MULTI_NL_RE.sub("\n\n", t)
     return t.strip()
 
+def _postprocess_for_display(full_text: str, max_chars: int = 200) -> Dict[str, str]:
+    """
+    응답을 UI용으로 적당히 자르고 escape까지 수행.
+    """
+    t = (full_text or "").strip()
+    if not t:
+        return {"brief": "", "keywords": "", "html": "", "full": ""}
+
+    if max_chars is None:
+        max_chars = int(current_app.config.get("BOT_MAX_DISPLAY_CHARS", 500))
+
+    window = t[: max_chars + 120]
+    end_floor = min(120, max_chars // 2)
+    end = max(
+        window.rfind("다."), window.rfind("요."), window.rfind("."),
+        window.rfind("!"), window.rfind("?"),
+    )
+    if 120 <= end <= max_chars + 120:
+        cut = window[: end + 1]
+    else:
+        cut = t[: max_chars].rstrip() + "…"
+
+    html_out = html.escape(cut)
+    return {"brief": cut, "keywords": "", "html": html_out, "full": t}
 
 def _generate(llm, messages: List[Dict], **kw) -> str:
     return _light_clean(llm.chat(messages, **kw))
 
-
 # =========================================================
-# 휴리스틱 채점 유틸 (기존 그대로)
+# 휴리스틱 채점 유틸
 # =========================================================
 _TOPIC_KW = {
     "meal": ["식사", "밥", "먹", "아침", "점심", "저녁", "커피", "빵"],
@@ -372,16 +541,13 @@ _KO_FILLERS_RE = re.compile(r"(?:\b|^)(음+|엄+|어+|그[음]+|저[기]+|그니
 _STOPWORDS = {"은", "는", "이", "가", "을", "를", "에", "도", "과", "와", "으로", "해서", "하다", "하고", "근데", "그냥", "뭔가", "좀", "조금"}
 _DEICTIC_RE = re.compile(r"\b(그거|이거|저거|거기|저기|그곳|이곳|저곳)\b")
 
-
 def _norm(s: str) -> str:
     s = (s or "").lower()
     s = re.sub(r"[^\w가-힣\s]", " ", s)
     return re.sub(r"\s+", " ", s).strip()
 
-
 def _content_words(s: str):
     return [w for w in _norm(s).split() if w not in _STOPWORDS and len(w) > 1]
-
 
 def _jaccard(a: set, b: set) -> float:
     if not a and not b:
@@ -390,7 +556,6 @@ def _jaccard(a: set, b: set) -> float:
     union = len(a | b)
     return inter / max(1, union)
 
-
 def _detect_topics(text: str):
     t = set()
     for k, kws in _TOPIC_KW.items():
@@ -398,10 +563,8 @@ def _detect_topics(text: str):
             t.add(k)
     return t
 
-
 def _get_asked_topics() -> set:
     return set(session.get("asked_topics", []))
-
 
 def _remember_topics_from_text(text: str) -> None:
     topics = _detect_topics(text or "")
@@ -410,7 +573,6 @@ def _remember_topics_from_text(text: str) -> None:
     cur = _get_asked_topics()
     cur.update(topics)
     session["asked_topics"] = list(cur)
-
 
 def _heuristic_scores(history: List[Dict]) -> Dict[str, int]:
     user_utts = [m["content"] for m in history if m.get("role") == "user"]
@@ -449,7 +611,6 @@ def _heuristic_scores(history: List[Dict]) -> Dict[str, int]:
         "consistency": consistency,
     }
 
-
 def _merge_scores(heur: Dict[str, int], llm: Dict[str, int]) -> (Dict[str, int], int):
     keys = ["coherence", "repetition", "fluency", "word_choice", "consistency"]
     merged = {}
@@ -460,9 +621,8 @@ def _merge_scores(heur: Dict[str, int], llm: Dict[str, int]) -> (Dict[str, int],
     total = sum(merged.values())
     return merged, total
 
-
 # =========================================================
-# 대화 평가(종료 시 1회)
+# 대화 평가/결과 저장
 # =========================================================
 EVAL_PROMPT = (
     "다음은 상담사(assistant)와 사용자(user)의 한국어 일상 대화 기록이다.\n"
@@ -475,10 +635,8 @@ EVAL_PROMPT = (
     "대화:\n"
 )
 
-
 def _evaluate_conversation_with_llm(history: List[Dict]) -> Dict[str, object]:
     heur = _heuristic_scores(history)
-
     llm = get_llm()
     transcript = []
     for m in history:
@@ -490,7 +648,7 @@ def _evaluate_conversation_with_llm(history: List[Dict]) -> Dict[str, object]:
     raw = _generate(llm, [{"role": "user", "content": prompt}], max_new_tokens=220)
     try:
         s, e = raw.find("{"), raw.rfind("}")
-        js = json.loads(raw[s:e+1])
+        js = json.loads(raw[s:e + 1])
         llm_scores = js.get("scores") or {}
     except Exception:
         llm_scores = {}
@@ -508,10 +666,6 @@ def _evaluate_conversation_with_llm(history: List[Dict]) -> Dict[str, object]:
 
     return {"scores": merged_scores, "total": merged_total, "max": 10, "label": label, "advice": advice}
 
-
-# =========================================================
-# 결과 저장(종료 시 1회, 로그인 사용자만)
-# =========================================================
 def _save_final_result_for_user(result: Dict[str, object]) -> Optional[int]:
     if not _is_logged_in():
         return None
@@ -521,15 +675,14 @@ def _save_final_result_for_user(result: Dict[str, object]) -> Optional[int]:
 
     payload = {"type": "screening_v1", "result": result}
     text = (
-        f"[스크리닝 결과] 총점 {_to_int(result.get('total'), 0)}/{_to_int(result.get('max'), 10)} → {str(result.get('label',''))}\n"
-        f"권고: {str(result.get('advice',''))}\n"
+        f"[스크리닝 결과] 총점 {_to_int(result.get('total'), 0)}/{_to_int(result.get('max'), 10)} → {str(result.get('label', ''))}\n"
+        f"권고: {str(result.get('advice', ''))}\n"
         "※ 본 도구는 참고용이며, 의학적 진단이 아닙니다.\n\n"
         f"[[SCREEN_JSON]]{json.dumps(payload, ensure_ascii=False)}[[/SCREEN_JSON]]"
     )
     db.session.add(Message(conversation_id=conv.id, role="assistant", content=text))
     db.session.commit()
     return conv.id
-
 
 def _save_screening_result_row(result: Dict[str, object], summary_text: str) -> Optional[int]:
     if not _is_logged_in():
@@ -546,7 +699,6 @@ def _save_screening_result_row(result: Dict[str, object], summary_text: str) -> 
     db.session.add(row)
     db.session.commit()
     return row.id
-
 
 # =========================================================
 # 대화 API (/genai/audio/converse)
@@ -602,7 +754,7 @@ def audio_converse():
 
         llm = get_llm()
         reply = _generate(llm, [{"role": "system", "content": system}] + history, max_new_tokens=160) \
-                or "잘 들었습니다. 조금 더 자세히 말씀해 주실 수 있을까요?"
+            or "잘 들었습니다. 조금 더 자세히 말씀해 주실 수 있을까요?"
 
         history.append({"role": "assistant", "content": reply})
         session["screen_history"] = history
@@ -615,82 +767,97 @@ def audio_converse():
         current_app.logger.exception("audio_converse error")
         return jsonify(reply="서버 설정에 잠시 문제가 있어요. 다시 시도해 주세요.", error=str(e)), 200
 
+# =========================================================
+# (선택) RAG: 없으면 조용히 비활성
+# =========================================================
+# =========================================================
+# (선택) RAG: 없으면 조용히 비활성  — ★지연 로딩으로 안전하게★
+# =========================================================
+from functools import lru_cache
+
+def _load_rag_impl():
+    """pybo.rag.rag_search_snippets 를 안전하게 로드해 반환. 실패하면 None."""
+    # 캐시처럼 1회만 시도하고 결과 보관
+    impl = getattr(_load_rag_impl, "_impl", None)
+    if impl is not None:
+        return impl
+    try:
+        # 1) 절대 경로 우선 (프로젝트 루트에서 확실)
+        from pybo.rag import rag_search_snippets
+        impl = rag_search_snippets
+    except Exception as e_abs:
+        try:
+            # 2) 상대 경로 대안 (패키지 구조에 따라 허용)
+            from ..rag import rag_search_snippets as rag_search_snippets_rel
+            impl = rag_search_snippets_rel
+        except Exception as e_rel:
+            # 앱 컨텍스트가 있으면 로그로 남김
+            try:
+                current_app.logger.warning("RAG import failed: abs=%s / rel=%s", e_abs, e_rel)
+            except Exception:
+                pass
+            impl = None
+    setattr(_load_rag_impl, "_impl", impl)
+    return impl
+
+@lru_cache(maxsize=128)
+def _rag_search_cached(query: str, top_k: int = 3) -> Optional[str]:
+    """RAG 검색 결과 캐시(간단 LRU) – 같은 질문 반복 시 빠르게"""
+    impl = _load_rag_impl()
+    if not impl:
+        return None
+    try:
+        return impl(query, top_k=top_k)
+    except Exception as e:
+        current_app.logger.warning("RAG search failed: %s", e)
+        return None
+
+def _compose_bot_system_with_rag(
+        rag_ctx: Optional[str],
+        length_chars: int,
+        detail_chars: int,
+        want_detail: bool
+) -> str:
+    base = _bot_system_prompt(length_chars, detail_chars, want_detail)
+    if rag_ctx:
+        trimmed = rag_ctx[: int(current_app.config.get("RAG_MAX_CHARS", 2800))]
+        base += (
+            "\n\n[참고자료(스니펫)]\n"
+            f"{trimmed}\n\n"
+            "지시: 위 참고자료 범위 안에서만 한국어로 답하라. "
+            "가능하면 출처/위치를 간단히 힌트로 포함하라."
+        )
+    return base
+
 
 # =========================================================
-# (통합) 봇 챗 ― /genai/bot, /genai/bot/api/message, /genai/bot/api/reset
+# (통합과 별개) 봇 챗 ― /genai/bot, /genai/bot/api/*
 # =========================================================
+def _bot_system_prompt(length_chars: int, detail_chars: int, want_detail: bool) -> str:
+    return (
+        "너는 한국어로만 간결, 정확, 친절하게 대답하는 도우미다. "
+        "검사용 문항(기억 단어 제시, 계산, 점수/진단 언급)은 절대 하지 말라. "
+        "다른 언어는 요청이 없으면 절대 출력하지 않는다."
+        "이전 발언은 잊었다 말하지 않는다. "
+        "확실치 않은 내용은 추측하지 않고, 모른다고 답한다. "
+        "사과는 1회 이내로 한다. "
+        f"답변은 기본 {length_chars} 정도로 한다. 같은 질문에 2회 실패하면 다른 화제로 전환한다."
+        f"사용자가 상세한 설명 요청 시 {detail_chars} 이내로 답변한다. "
+        "참고자료가 주어지면 그 범위 안에서만 답한다."
+    )
+
 def _bot_history() -> List[Dict[str, str]]:
     return session.get("bot_history", [])
-
 
 def _save_bot_history(hist: List[Dict[str, str]]):
     max_msgs = int(current_app.config.get("GENAI_MAX_MESSAGES", 80))
     session["bot_history"] = hist[-max_msgs:]
 
-
 def _reset_bot_session():
     session.pop("bot_history", None)
 
-
-def _bot_system_prompt() -> str:
-    return (
-        "너는 한국어로만 간결, 정확, 친절하게 대답하는 도우미다. "
-        "다른 언어는 요청이 없으면 절대 출력하지 않는다."
-        "이전 발언은 잊었다 말하지 않는다. "
-        "확실치 않은 내용은 추측하지 않고, 모른다고 답한다. "
-        "사과는 1회 이내로 한다. "
-        "답변은 기본 3~6문장 정도로 한다. "
-        "사용자가 상세한 설명 요청 시 300자 이내로 답변한다. "
-        "참고자료가 주어지면 그 범위 안에서만 답한다."
-    )
-
-
-def _call_llm(messages: List[Dict], max_new_tokens: int = 200) -> str:
-    llm = get_llm()
-    try:
-        return (llm.chat(messages, max_new_tokens=max_new_tokens) or "").strip()
-    except Exception as e:
-        current_app.logger.exception("LLM call failed: %s", e)
-        return "지금은 답변 생성이 원활하지 않습니다. 질문을 조금만 바꿔 다시 시도해 보시겠어요?"
-
-
-def _postprocess_for_display(full_text: str, max_chars: int = 200) -> Dict[str, str]:
-    t = (full_text or "").strip()
-    if not t:
-        return {"brief": "", "keywords": "", "html": "", "full": ""}
-
-    if max_chars is None:
-        max_chars = int(current_app.config.get("BOT_MAX_DISPLAY_CHARS", 500))
-
-    window = t[: max_chars + 120]
-    end = max(
-        window.rfind("다."),
-        window.rfind("요."),
-        window.rfind("."),
-        window.rfind("!"),
-        window.rfind("?"),
-    )
-
-    if 120 <= end <= max_chars + 120:
-        cut = window[: end + 1]
-    else:
-        cut = t[: max_chars].rstrip() + "…"
-
-    esc = html.escape
-    html_out = esc(cut)
-    return {"brief": cut, "keywords": "", "html": html_out, "full": t}
-
-
-# (선택) RAG: 없으면 조용히 비활성
-try:
-    from ..rag import rag_search_snippets as _rag_search_impl
-except Exception:
-    _rag_search_impl = None
-
-
 @bp.route("/bot", methods=["GET"])
 def bot_view():
-    # reset=1 쿼리로 히스토리 초기화
     if request.args.get("reset") == "1":
         session.pop("bot_history", None)
         return redirect(url_for("genai.bot_view"))
@@ -700,19 +867,16 @@ def bot_view():
         messages=_bot_history(),
         bot_mode_rag=str(current_app.config.get("BOT_RAG_MODE", "false")).lower() == "true",
         bot_mode_agent=str(current_app.config.get("BOT_AGENT_MODE", "false")).lower() == "true",
-        # NEW: 이 페이지에서의 전송/리셋 주소
         post_url=url_for("genai.bot_api_message"),
         reset_url=url_for("genai.bot_api_reset"),
         is_guest=True,
-        conversation=type("Conv", (), {"title": "AI 검색·요약(에이전트)"}),  # 템플릿 호환용
+        conversation=type("Conv", (), {"title": "AI 검색·요약(에이전트)"}),
     )
-
 
 @bp.route("/bot/api/reset", methods=["POST"])
 def bot_api_reset():
     _reset_bot_session()
     return jsonify(ok=True)
-
 
 @bp.route("/bot/api/message", methods=["POST"])
 def bot_api_message():
@@ -727,41 +891,197 @@ def bot_api_message():
     use_rag = str(current_app.config.get("BOT_RAG_MODE", "false")).lower() == "true"
     use_agent = str(current_app.config.get("BOT_AGENT_MODE", "false")).lower() == "true"
 
-    # 표시 길이: 기본/에이전트·RAG 구분
-    display_limit = int(current_app.config.get("BOT_MAX_DISPLAY_CHARS", 500))
-    if use_rag or use_agent:
-        display_limit = int(current_app.config.get("BOT_MAX_DISPLAY_CHARS_RAG", 900))
+    # ▼ 이번 턴 글자수 결정 + UI 컷 기준 동일화
+    length_chars, detail_chars, want_detail = _decide_answer_length(user_text)
+    display_limit = length_chars
 
-    # ---------- Agent 우선 시도 ----------
+    # ------ Agent 우선 시도 ------
     if use_agent:
         try:
             from pybo.agent.runner import agent_run
+            t0 = perf_counter()
             full = agent_run(user_text, hist, get_llm)
+            t_agent = perf_counter() - t0
             pp = _postprocess_for_display(full, max_chars=display_limit)
             hist.append({"role": "assistant", "content": pp["html"]})
             _save_bot_history(hist)
+            current_app.logger.info("[BOT] agent mode OK (%.2fs, len=%d)", t_agent, len(full))
             return jsonify(reply=pp["html"], keywords=pp["keywords"], mode="agent"), 200
         except Exception as e:
             current_app.logger.warning("Agent failed: %s", e)
 
-    messages = [{"role": "system", "content": _bot_system_prompt()}] + hist
+    # ------ RAG 준비 ------
+    rag_ctx = None
+    rag_used = False
+    t_rag = 0.0
+    if use_rag:
+        t0 = perf_counter()
+        top_k = int(current_app.config.get("RAG_TOP_K", 3))
+        rag_ctx = _rag_search_cached(user_text, top_k=top_k)
+        t_rag = perf_counter() - t0
+        rag_used = bool(rag_ctx and not str(rag_ctx).startswith("[error]"))
+        if not rag_used:
+            rag_ctx = None
 
-    if use_rag and _rag_search_impl is not None:
-        try:
-            top_k = int(current_app.config.get("RAG_TOP_K", 3))
-            ctx = _rag_search_impl(user_text, top_k=top_k)
-            if ctx and not str(ctx).startswith("[error]"):
-                messages.insert(1, {
-                    "role": "system",
-                    "content": f"다음 참고자료를 바탕으로만 답하라(스니펫+출처 힌트):\n{ctx[:3500]}"
-                })
-        except Exception as e:
-            current_app.logger.warning("RAG failed: %s", e)
+    # ▼ 길이 지시 포함된 시스템 프롬프트
+    system = _compose_bot_system_with_rag(rag_ctx, length_chars, detail_chars, want_detail)
 
-    max_new = int(current_app.config.get("GENAI_MAX_NEW_TOKENS", 320))
-    full = _call_llm(messages, max_new_tokens=max_new)
-    pp = _postprocess_for_display(full, max_chars=display_limit)
+    # ------ 생성 (토큰 상한을 길이에 맞춰 보정) ------
+    cfg_max = int(current_app.config.get("GENAI_MAX_NEW_TOKENS", 320))
+    max_new = min(cfg_max, max(60, length_chars * 2))
 
+    t0 = perf_counter()
+    answer_full = _gen_with_optional_memory(system, hist, max_new=max_new)
+    t_llm = perf_counter() - t0
+
+    pp = _postprocess_for_display(answer_full, max_chars=display_limit)
     hist.append({"role": "assistant", "content": pp["html"]})
     _save_bot_history(hist)
-    return jsonify(reply=pp["html"], keywords=pp["keywords"], mode="chat_rag" if use_rag else "chat"), 200
+
+    current_app.logger.info(
+        "[BOT] mode=%s rag_used=%s rag_t=%.2fs llm_t=%.2fs out_len=%d",
+        "chat_rag" if rag_used else "chat", rag_used, t_rag, t_llm, len(answer_full)
+    )
+    return jsonify(
+        reply=pp["html"],
+        keywords=pp["keywords"],
+        mode="chat_rag" if rag_used else "chat",
+        rag_used=rag_used,
+        rag_chars=len(rag_ctx or "")
+    ), 200
+
+
+# =========================================================
+# 통합 TALK(자동 모드) ― /genai/talk + /genai/talk/api/*
+# =========================================================
+def _talk_history() -> List[Dict[str, str]]:
+    return session.get("talk_history", [])
+
+def _save_talk_history(hist: List[Dict[str, str]]):
+    max_msgs = int(current_app.config.get("GENAI_MAX_MESSAGES", 80))
+    session["talk_history"] = hist[-max_msgs:]
+
+def _reset_talk_session():
+    session.pop("talk_history", None)
+
+def _counsel_system_prompt(length_chars: int, detail_chars: int, want_detail: bool) -> str:
+    return (
+        "너는 한국어로 편안하게 대화하는 상담사다. "
+        "검사용 문항(기억 단어 제시, 계산, 점수/진단 언급)은 절대 하지 말라. "
+        "모르는 것은 잘 모르겠다, 죄송하다 하고 화제전환한다. "
+        "항상 1–2문장으로 공감→짧은 질문 순으로 말한다. 같은 질문을 두 번 실패하면 다른 화제로 전환한다. "
+        f"이번 답변은 최대 {length_chars}자 이내로 작성하라. "
+        f"사용자가 '자세히/상세히/더 길게'와 같이 세부 내용을 요청한 경우에만 {detail_chars}자까지 허용한다."
+    )
+
+
+def _decide_talk_mode(user_text: str) -> str:
+    t = user_text.strip()
+    if re.search(r"(검색|출처|요약|자료|링크|논문|법|가격|스펙|에러|오류|설치|비교|근거|통계|데이터|참고)", t):
+        return "agent"
+    if re.search(r"(기분|힘들|걱정|불안|외롭|우울|요즘|하루|잠|식사|산책|가족|친구|날씨|이야기|대화)", t):
+        return "counsel"
+    if "?" in t or re.search(r"(무엇|어디|언제|어떻게|왜|몇|추천)", t):
+        return "agent"
+    return "counsel"
+
+@bp.route("/talk", methods=["GET"])
+def talk():
+    return render_template(
+        "genai.html",
+        api_message=url_for("genai.talk_api_message"),
+        api_reset=url_for("genai.talk_api_reset"),
+        api_summary=url_for("genai.talk_api_summary"),
+    )
+
+@bp.route("/talk/api/reset", methods=["POST"])
+def talk_api_reset():
+    _reset_talk_session()
+    return jsonify(ok=True), 200
+
+@bp.route("/talk/api/message", methods=["POST"])
+def talk_api_message():
+    data = request.get_json(silent=True) or request.form or {}
+    user_text = (data.get("text") or data.get("message") or data.get("recognized") or "").strip()
+    if not user_text:
+        return jsonify(reply="무엇을 도와드릴까요?"), 200
+
+    hist = _talk_history()
+    hist.append({"role": "user", "content": user_text})
+
+    mode = _decide_talk_mode(user_text)
+
+    # ▼ 이번 턴 글자수 결정을 먼저 하고, UI 컷 기준도 동일하게 맞춤
+    length_chars, detail_chars, want_detail = _decide_answer_length(user_text)
+    display_limit = length_chars
+
+    # ---- 상담 모드 ----
+    if mode == "counsel":
+        # ▼ 프롬프트에도 같은 길이 지시 포함
+        system = _counsel_system_prompt(length_chars, detail_chars, want_detail)
+
+        # ▼ 토큰 상한 보정
+        cfg_max = int(current_app.config.get("GENAI_MAX_NEW_TOKENS", 320))
+        max_new = min(cfg_max, max(60, length_chars * 2))
+
+        answer_full = _gen_with_optional_memory(system, hist, max_new=max_new)
+        pp = _postprocess_for_display(answer_full, max_chars=display_limit)
+        hist.append({"role": "assistant", "content": pp["html"]})
+        _save_talk_history(hist)
+        return jsonify(reply=pp["html"], mode="counsel"), 200
+
+    # ---- 에이전트(검색/RAG) 모드 ----
+    rag_used = False
+    rag_ctx = None
+    t_rag = 0.0
+    if str(current_app.config.get("BOT_RAG_MODE", "false")).lower() == "true":
+        t0 = perf_counter()
+        top_k = int(current_app.config.get("RAG_TOP_K", 3))
+        rag_ctx = _rag_search_cached(user_text, top_k=top_k)
+        t_rag = perf_counter() - t0
+        rag_used = bool(rag_ctx and not str(rag_ctx).startswith("[error]"))
+        if not rag_used:
+            rag_ctx = None
+
+    # ▼ RAG 포함/미포함 모두 동일 길이 지시가 들어간 시스템 프롬프트 사용
+    system = _compose_bot_system_with_rag(rag_ctx, length_chars, detail_chars, want_detail)
+
+    # ▼ 토큰 상한 보정
+    cfg_max = int(current_app.config.get("GENAI_MAX_NEW_TOKENS", 320))
+    max_new = min(cfg_max, max(60, length_chars * 2))
+
+    t0 = perf_counter()
+    answer_full = _gen_with_optional_memory(system, hist, max_new=max_new)
+    t_llm = perf_counter() - t0
+
+    pp = _postprocess_for_display(answer_full, max_chars=display_limit)
+    hist.append({"role": "assistant", "content": pp["html"]})
+    _save_talk_history(hist)
+
+    current_app.logger.info("[TALK] mode=agent rag=%s rag_t=%.2fs llm_t=%.2fs", rag_used, t_rag, t_llm)
+    return jsonify(reply=pp["html"], mode="agent", rag_used=rag_used, rag_chars=len(rag_ctx or "")), 200
+
+
+@bp.route("/talk/api/summary", methods=["POST"])
+def talk_api_summary():
+    try:
+        hist = _talk_history()
+        if not hist:
+            return jsonify(ok=False), 200
+
+        summary = _summarize_messages_for_db(hist, max_new=240)
+        if not summary.strip():
+            return jsonify(ok=False), 200
+
+        if _is_logged_in():
+            c = Conversation(user_id=g.user.id, title="통합 대화 요약")
+            db.session.add(c); db.session.flush()
+            db.session.add(Message(conversation_id=c.id, role="assistant", content=summary))
+            db.session.commit()
+            return jsonify(ok=True, conversation_id=c.id), 200
+
+        return jsonify(ok=True), 200
+
+    except Exception as e:
+        current_app.logger.exception("talk summary save failed")
+        return jsonify(ok=False, error=str(e)), 200

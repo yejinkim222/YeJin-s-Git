@@ -1,5 +1,21 @@
 /* ===== GenAI Chat 전용 (전역과 비겹치게 최소만) ===== */
 
+/* 제목 */
+.genai-chat-wrap .chat-title {
+  width: 100%;
+  max-width: 720px;
+  margin: 16px auto 12px;
+  text-align: center;
+  font-size: 24px;
+  font-weight: 700;
+  color: #1976d2;
+}
+.genai-chat-wrap {
+  max-width: 960px;
+  margin: 24px auto;
+  padding: 0 20px;
+}
+
 /* 래퍼 */
 .genai-chat-wrap{
   max-width: 800px;
