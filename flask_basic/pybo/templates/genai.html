@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/genai.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="genai-wrap"
+     id="genaiApp"
+     data-api-message="{{ api_message }}"
+     data-api-reset="{{ api_reset }}"
+     data-api-summary="{{ api_summary }}">
+  <div class="chat-header">
+    <h2 class="chat-title">SolCare 대화</h2>
+  </div>
+
+  <div class="chat-shell" id="chatShell">
+    <ul class="chat-list" id="chatList">
+      <li class="msg bot">
+        <div class="bubble bot">
+          안녕하세요! 어떤 것을 도와 드릴까요? 필요하신 것을 말씀해 주세요.
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <div class="controls">
+    <button id="btnMic" class="btn btn-secondary" title="음성 녹음 토글">🎙️ 녹음</button>
+    <input id="prompt" class="text-input" placeholder="메시지를 입력하세요 (엔터 전송)">
+    <button id="btnSend" class="btn">보내기</button>
+    <button id="btnReset" class="btn btn-outline">새 대화</button>
+    <span class="timer" id="timer" aria-live="polite"></span>
+  </div>
+
+  <p class="notice">※ 본 도구는 의학적 진단이 아닌 참고용입니다.</p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/genai.js') }}"></script>
+{% endblock %}
