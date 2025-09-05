@@ -130,7 +130,7 @@ def _save_screening_result(label: str, score: int, total: int, advice: str, summ
     if not getattr(g, "user", None):
         return
     row = ScreeningResult(
-        user_username=g.user.username,
+        user_id=g.user.id,
         total_score=int(score),
         max_score=int(total),
         result_summary=label,

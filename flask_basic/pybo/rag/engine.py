@@ -29,6 +29,7 @@ from FlagEmbedding import BGEM3FlagModel
 # =========================
 class _BgeM3Embeddings(Embeddings):
     """FlagEmbedding BGEM3 -> LangChain Embeddings 어댑터"""
+
     def __init__(self, model_id: str):
         self.model = BGEM3FlagModel(model_id, use_fp16=True)
 
@@ -91,19 +92,30 @@ def _guess_pdf_title(pdf_path: str) -> PdfMeta:
             head = (pages[0].page_content or "").splitlines()
             head = [re.sub(r"\s+", " ", ln.strip()) for ln in head[:30]]
             head = [ln for ln in head if ln]
-            bad = re.compile(r"^(abstract|요약|목차|contents|서론|introduction)\b", re.I)
+            bad = re.compile(
+                r"^(abstract|요약|목차|contents|서론|introduction)\b", re.I
+            )
             cand = [ln for ln in head if len(ln) >= 6 and not bad.match(ln)]
             good = [ln for ln in cand if 8 <= len(ln) <= 120]
-            picked = (max(good, key=len) if good else (max(cand, key=len) if cand else ""))
+            picked = (
+                max(good, key=len) if good else (max(cand, key=len) if cand else "")
+            )
             if picked:
                 title = picked if len(picked) <= 120 else picked[:120].rstrip() + "…"
                 title_is_guess = True
     except Exception:
-        current_app.logger.warning("RAG: title guess via PyPDFLoader failed: %s", pdf_path)
+        current_app.logger.warning(
+            "RAG: title guess via PyPDFLoader failed: %s", pdf_path
+        )
 
     if not title:
         title, title_is_guess = os.path.splitext(os.path.basename(pdf_path))[0], True
-    return PdfMeta(title=title, title_is_guess=title_is_guess, pages_total=pages_total, file_path=pdf_path)
+    return PdfMeta(
+        title=title,
+        title_is_guess=title_is_guess,
+        pages_total=pages_total,
+        file_path=pdf_path,
+    )
 
 
 def _make_splitter() -> RecursiveCharacterTextSplitter:
@@ -123,21 +135,27 @@ def _attach_preview(chunks: List[str]) -> List[str]:
     out.append(chunks[-1])
     return out
 
+
 # --- doc_key: 경로/내용 전략 분리 ---
+
 
 def _doc_key_path(path: str) -> str:
     ap = os.path.abspath(path).replace("\\", "/").lower()
     return "path:" + hashlib.sha1(ap.encode("utf-8", "ignore")).hexdigest()
 
+
 _DOI_RE = r"10\.\d{4,9}/[-._;()/:A-Z0-9]+"
+
 
 def _extract_doi(text: str) -> str | None:
     m = re.search(_DOI_RE, text, flags=re.I)
     return m.group(0).lower() if m else None
 
+
 def _norm_title(s: str) -> str:
     s = (s or "").lower()
     return re.sub(r"[\s\[\]\(\)\{\}:;,.]+", " ", s).strip()
+
 
 def _doc_key_text(title: str, raw_text: str) -> str:
     doi = _extract_doi(raw_text or "")
@@ -147,6 +165,7 @@ def _doc_key_text(title: str, raw_text: str) -> str:
     if base:
         return "t:" + hashlib.sha1(base.encode("utf-8", "ignore")).hexdigest()
     return "h:" + hashlib.sha1((raw_text or "").encode("utf-8", "ignore")).hexdigest()
+
 
 def _choose_doc_key(path: str | None = None, title: str = "", text: str = "") -> str:
     """
@@ -162,8 +181,10 @@ def _choose_doc_key(path: str | None = None, title: str = "", text: str = "") ->
         return _doc_key_path(path)
     return _doc_key_text(title, text)
 
+
 # 하나만 남기세요: 리스트형 프리뷰 부착기
 from typing import List
+
 
 def _chunks_with_preview(splits: List[str]) -> List[str]:
     """splitter로 자른 청크 리스트에 '다음 청크의 앞 preview_n자'를 붙여준다."""
@@ -228,7 +249,7 @@ def rag_upsert_pdfs(paths: List[str]) -> Dict:
     vectordb = _get_chroma()
     splitter = _make_splitter()
 
-    for p in (paths or []):
+    for p in paths or []:
         try:
             if not os.path.exists(p) or not p.lower().endswith(".pdf"):
                 skipped.append({"path": p, "reason": "file_not_found_or_not_pdf"})
@@ -286,7 +307,11 @@ def rag_upsert_pdfs(paths: List[str]) -> Dict:
                         Document(
                             page_content=chunk,
                             metadata={
-                                "title": meta.title if not meta.title_is_guess else f"[추정] {meta.title}",
+                                "title": (
+                                    meta.title
+                                    if not meta.title_is_guess
+                                    else f"[추정] {meta.title}"
+                                ),
                                 "title_is_guess": bool(meta.title_is_guess),
                                 "file_path": meta.file_path,
                                 "pages_total": meta.pages_total,
@@ -322,7 +347,9 @@ def rag_sync_env_pdf_dir() -> Dict:
     if not os.path.isdir(base):
         return {"ok": False, "msg": f"RAG_PDF_DIR not found: {base}"}
 
-    pdfs = [os.path.join(base, n) for n in os.listdir(base) if n.lower().endswith(".pdf")]
+    pdfs = [
+        os.path.join(base, n) for n in os.listdir(base) if n.lower().endswith(".pdf")
+    ]
     reg = _load_registry()
 
     targets = []
@@ -355,7 +382,7 @@ def rag_upsert_texts(items: List[Dict]) -> Dict:
     vectordb = _get_chroma()
     splitter = _make_splitter()
 
-    for it in (items or []):
+    for it in items or []:
         try:
             title = (it.get("title") or "internal").strip()
             extra = it.get("meta") or {}
@@ -424,7 +451,6 @@ def rag_search_snippets(query: str, top_k: int = 3) -> str:
     """
     질의어로 유사 청크 상위 K개를 찾아
     '짧은 스니펫 + 출처 힌트 + 키워드'로 반환.
-    (스니펫은 가독성 위해 정리하고 200자로 제한)
     """
     try:
         vectordb = _get_chroma()
@@ -435,15 +461,93 @@ def rag_search_snippets(query: str, top_k: int = 3) -> str:
 
     # 영어 불용어(간단 셋)
     _EN_STOP = {
-        "the","and","for","with","that","this","from","have","has","had","are","was","were","be","been",
-        "of","to","in","on","at","by","as","an","or","but","not","no","yes","it","its","is","if","into",
-        "can","may","might","should","could","would","will","than","then","so","such","more","most","any",
-        "all","some","many","much","also","about","over","under","between","within","without"
+        "the",
+        "and",
+        "for",
+        "with",
+        "that",
+        "this",
+        "from",
+        "have",
+        "has",
+        "had",
+        "are",
+        "was",
+        "were",
+        "be",
+        "been",
+        "of",
+        "to",
+        "in",
+        "on",
+        "at",
+        "by",
+        "as",
+        "an",
+        "or",
+        "but",
+        "not",
+        "no",
+        "yes",
+        "it",
+        "its",
+        "is",
+        "if",
+        "into",
+        "can",
+        "may",
+        "might",
+        "should",
+        "could",
+        "would",
+        "will",
+        "than",
+        "then",
+        "so",
+        "such",
+        "more",
+        "most",
+        "any",
+        "all",
+        "some",
+        "many",
+        "much",
+        "also",
+        "about",
+        "over",
+        "under",
+        "between",
+        "within",
+        "without",
     }
     # 한국어 불용어(간단 셋)
     _KO_STOP = {
-        "그리고","그러나","대한","관련","사용","있습니다","합니다","입니다","있는","위해","최근","포함",
-        "등","및","에서","으로","하는","하여","했다","된다","수","때","대해","까지","같은","경우"
+        "그리고",
+        "그러나",
+        "대한",
+        "관련",
+        "사용",
+        "있습니다",
+        "합니다",
+        "입니다",
+        "있는",
+        "위해",
+        "최근",
+        "포함",
+        "등",
+        "및",
+        "에서",
+        "으로",
+        "하는",
+        "하여",
+        "했다",
+        "된다",
+        "수",
+        "때",
+        "대해",
+        "까지",
+        "같은",
+        "경우",
     }
 
     def _kw(text: str, n: int = 5) -> str:
@@ -484,4 +588,6 @@ def rag_search_snippets(query: str, top_k: int = 3) -> str:
 
     if not hints:
         return "색인된 자료에서 유의미한 결과를 찾지 못했습니다. 다른 표현으로 다시 물어봐 주세요."
-    return "다음 자료가 유용할 수 있어요. 더 자세히 보시겠다면 특정 항목을 지목해 주세요:\n" + "\n".join(hints)
+    return "다음 자료가 유용할 수 있어요. 더 자세히 보시겠다면 특정 항목을 지목해 주세요:\n" + "\n".join(
+        hints
+    )

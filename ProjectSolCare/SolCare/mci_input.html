@@ -59,15 +59,15 @@
         <label><input type="radio" name="hibpe" value="0" /> 없음</label>
       </div>
 
-      <!-- ✅ 인지 기능 상태 입력 -->
+      <!-- 인지 기능 상태 입력 -->
       <label for="cog_input_mode">인지 기능 상태 입력</label>
-      <!-- ✅ HTML 수정: cog_choice -> cog_input_mode 로 id, name 정정 -->
+      <!-- HTML 수정: cog_choice -> cog_input_mode 로 id, name 정정 -->
       <div class="radio-group" id="cog_input_mode_wrapper">
         <label><input type="radio" name="cog_input_mode" value="mci" checked> MCI 여부 입력</label>
         <label><input type="radio" name="cog_input_mode" value="mmse"> MMSE 점수 입력</label>
       </div>
 
-      <!-- ✅ ① 처음부터 hidden 클래스로 감추고, inline style 은 삭제 -->
+      <!-- ① 처음부터 hidden 클래스로 감추고, inline style 은 삭제 -->
       <div class="form-row hidden" id="mci_input_field">
         <label>MCI 여부</label>
         <div class="radio-group">

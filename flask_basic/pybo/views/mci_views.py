@@ -9,7 +9,7 @@ from flask import Blueprint, render_template, request, url_for, g, flash
 from werkzeug.utils import redirect
 
 from .. import db
-from pybo.models import InputData
+from ..models import InputData
 from .auth_views import login_required
 from ..forms import InputDataForm
 
@@ -18,7 +18,7 @@ bp = Blueprint('mci', __name__, url_prefix='/mci')
 
 
 # 모델 경로 불러오기
-MODEL_PATH = Path("C:/workspace/Project01/model_storage/xgb_best_model_final3.pkl")
+MODEL_PATH = Path("pybo/python/mci_model/xgb_best_model_final3.pkl")
 # 모델 학습 시 사용한 컬럼명 순서대로 고정
 MODEL_COLUMNS = [
     'age','gender','edu_yrs','has_db','ad_mci_status','has_hibpe','edu_level',
@@ -50,7 +50,6 @@ def get_model():
 
 
 @bp.route('/input/', methods=['GET', 'POST'])
-# @login_required
 def create_input():
     form = InputDataForm()
 
@@ -146,7 +145,6 @@ def predict_one(feats: dict) -> float:
 
 
 @bp.route('/output/<int:input_id>/', methods=['GET'])
-# @login_required
 def output(input_id):
 
     row = InputData.query.get_or_404(input_id)
@@ -155,10 +153,11 @@ def output(input_id):
     feats = generate_features(row)
 
 
-    yhat = predict_one(feats)  # 모델 연결 전이면 0.0
+    yhat = predict_one(feats)
 
     # 템플릿에서 input_data, features, yhat 사용
     return render_template('mci/mci_output.html',
                            input_data=row,
                            features=feats,
                            yhat=yhat)
+

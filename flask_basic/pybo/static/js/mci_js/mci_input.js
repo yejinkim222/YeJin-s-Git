@@ -10,14 +10,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const genderRadios = document.querySelectorAll("input[name='gender']");
   const dbRadios = document.querySelectorAll("input[name='has_db']");
   const hibpeRadios = document.querySelectorAll("input[name='has_hibpe']");
-  const cogRadios = document.querySelectorAll("input[name='cog_input_mode']");  // "mci" | "mmse"
+  const cogRadios = document.querySelectorAll("input[name='cog_input_mode']");
   const mciRadios = document.querySelectorAll("input[name='has_mci_ui']");
   const mmseInput = document.getElementById("mmse_score");
 
   const mciField = document.getElementById("mci_input_field");
   const mmseField = document.getElementById("mmse_input_field");
 
-  const hasMciField = document.getElementById("has_mci_hidden"); // 서버로 제출되는 히든 필드
+  const hasMciField = document.getElementById("has_mci_hidden");
 
   // 섹션이 없으면 더 진행하지 않음(토글 에러 방지)
   if (!mciField || !mmseField) return;

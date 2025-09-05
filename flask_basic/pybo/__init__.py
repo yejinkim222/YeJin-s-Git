@@ -5,6 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 import config
 from pybo.agent.cli import register_cli
 from langchain import requests
+from pybo.rag import rag_sync_env_pdf_dir
 
 
 db = SQLAlchemy()
@@ -44,11 +45,12 @@ def create_app(config_name: str | None = None) -> Flask:
     app = Flask(__name__)
     app.config.from_object(config)
     app.extensions.setdefault("llm_store", {})
+    app.extensions.setdefault("rag_store", {})
 
     db.init_app(app)
     migrate.init_app(app, db)
 
-    from . import models
+
 
     from .views import (
         main_views, disease_views, mci_views, genai_views, auth_views)
@@ -58,14 +60,23 @@ def create_app(config_name: str | None = None) -> Flask:
     app.register_blueprint(genai_views.bp)
     app.register_blueprint(auth_views.bp)
 
+    # 앱 초기화
     with app.app_context():
+        # (1) LLM 워밍업
         try:
-            from pybo.views.genai_views import get_llm
+            from .views.genai_views import get_llm
             llm = get_llm()
             _ = llm.chat([{"role": "user", "content": "ok"}], max_new_tokens=1)
             app.logger.info("LLM warm-up done")
         except Exception as e:
             app.logger.warning("LLM warm-up skipped: %s", e)
+
+        # (2) RAG PDF 자동 동기화
+        if app.config.get("RAG_ENABLED", True):
+            result = rag_sync_env_pdf_dir()
+            added = result.get("added", 0)
+            skipped = len(result.get("skipped", []))
+            app.logger.info(f"RAG PDF 동기화 완료 - 추가: {added}, 스킵: {skipped}")
 
     register_cli(app)
 

@@ -20,7 +20,7 @@ from flask import (
 from pybo import db
 from pybo.models import Conversation, Message, ScreeningResult
 
-from langchain_ollama import ChatOllama
+# from langchain_ollama import ChatOllama
 
 try:
     from langchain_core.runnables import RunnableConfig
@@ -105,8 +105,8 @@ _LC_STORE: dict[str, "InMemoryChatMessageHistory"] = {}
 def _get_lc_with_memory():
     """
     LangChain 메모리 가능 시 RunnableWithMessageHistory 반환.
-    - GENAI_PROVIDER == "ollama" → ChatOllama 사용(권장, 키 불필요)
-    - 그 외(OpenAI 등) → 환경변수로 키 주입 후 ChatOpenAI 사용(키워드 인자 절대 안 넘김)
+    - GENAI_PROVIDER == "ollama" → ChatOllama 사용
+    - 그 외(OpenAI 등) → 환경변수로 키 주입 후 ChatOpenAI 사용
     - 실패 시 None
     """
     if not _LC_OK:
@@ -177,15 +177,17 @@ def _gen_with_optional_memory(system: str, history: list[dict], max_new: int = 1
             else:
                 lmsgs.append(AIMessage(content=c))
         try:
-            # ▼ config 인자 타입 경고 없이 설정
+            # ▼ LangChain memory path 시도
             resp = with_mem.with_config(configurable={"session_id": sid}).invoke(lmsgs)
             out = getattr(resp, "content", None) or str(resp) or ""
+            print("LangChain memory 응답:", out)
             return out.strip()
         except Exception as e:
             current_app.logger.warning("LangChain memory path failed: %s", e)
 
     # fallback: 기존 LLM
     return _generate(get_llm(), [{"role": "system", "content": system}] + history, max_new_tokens=max_new).strip()
+
 
 # =========================================================
 # 상담 챗봇 이력 로드/저장 (로그인/게스트 공용)
@@ -238,13 +240,51 @@ def _save_counsel_turn(user_text: str, answer: str, conv: Optional[Conversation]
         _save_guest_chat_msgs(h)
 
 def _handle_dialog_turn(system: str, user_text: str, max_new: int = 180) -> str:
-    """중복 제거용: 상담 챗봇 한 턴 처리"""
+    """상담 챗봇 한 턴 처리 - Agent + RAG 통합"""
     hist, conv = _load_counsel_history()
     hist_for_llm = hist + [{"role": "user", "content": user_text}]
+
+    # Agent 우선 시도 (도구 포함, RAG tool 자동 포함됨)
+    try:
+        from pybo.agent.runner import agent_run
+        answer = agent_run(user_text, hist, get_llm)
+        if answer:
+            _save_counsel_turn(user_text, answer, conv)
+            print("사용자 질문 (Agent):", user_text)
+            print("모델 응답 (Agent):", answer)
+            return answer
+    except Exception as e:
+        current_app.logger.warning("Agent fallback triggered: %s", e)
+
+    # RAG 문맥 삽입 시도 (사용자 질문 기반 스니펫)
+    try:
+        rag_ctx = _rag_search_cached(user_text)
+        system_with_rag = _compose_bot_system_with_rag(
+            rag_ctx, length_chars=800, detail_chars=200
+        )
+        answer = _generate(
+            get_llm(),
+            [{"role": "system", "content": system_with_rag}] + hist_for_llm,
+            max_new_tokens=max_new
+        )
+        if answer:
+            _save_counsel_turn(user_text, answer, conv)
+            print("사용자 질문 (RAG):", user_text)
+            print("모델 응답 (RAG):", answer)
+            return answer
+    except Exception as e:
+        current_app.logger.warning("RAG fallback triggered: %s", e)
+
+    # 기본 메모리 기반 LLM 사용
     answer = _gen_with_optional_memory(system, hist_for_llm, max_new=max_new) \
         or "잠시 후 다시 시도해 주세요."
     _save_counsel_turn(user_text, answer, conv)
+
+    print("사용자 질문 (기본):", user_text)
+    print("모델 응답 (기본):", answer)
+
     return answer
+
 
 def _summarize_messages_for_db(msgs: list[dict], max_new: int = 240) -> str:
     if not msgs:
@@ -272,12 +312,23 @@ def chat():
             system = (
                 "너는 한국어로 편안하게 대화하는 상담사다. 검사용 문항(기억 단어 제시, 계산, 점수/진단 언급)은 절대 하지 말라. "
                 "모르는 것은 잘 모르겠다, 죄송하다 하고 화제전환한다. "
-                "항상 1–2문장으로 공감→짧은 질문 순으로 말한다. 같은 질문을 두 번 실패하면 다른 화제로 전환한다."
+                "상담 시 항상 3-4문장으로 공감 → 짧은 질문 순으로 말한다. 같은 질문을 두 번 실패하면 다른 화제로 전환한다."
+                "정보 제공을 요청받으면 200자 정도로 답한다. "
+                "사용자가 자세한 정보 요청 시 300자 정도로 답한다. "
             )
-            _ = _handle_dialog_turn(system, text, max_new=180)
+            response_text = _handle_dialog_turn(system, text, max_new=180)
 
-        if request.is_json:
-            return jsonify(ok=True), 200
+            # 콘솔에서 비교 확인 (RAG vs NON-RAG)
+            print("사용자 입력:", text)
+            print("모델 응답:", response_text)
+
+            # 선택: JSON 요청이면 응답 직접 반환
+            if request.is_json:
+                return jsonify({
+                    "ok": True,
+                    "response": response_text
+                }), 200
+
         return redirect(url_for("genai.chat"))
 
     # --- GET 렌더 ---
@@ -297,8 +348,8 @@ def chat():
             is_guest=False,
             post_url=url_for("genai.chat"),
             reset_url=url_for("genai.chat") + "?reset=1",
-            bot_mode_rag=False,
-            bot_mode_agent=False,
+            bot_mode_rag=True,
+            bot_mode_agent=True,
         )
     else:
         guest_msgs = _guest_chat_msgs()
@@ -310,9 +361,10 @@ def chat():
             is_guest=True,
             post_url=url_for("genai.chat"),
             reset_url=url_for("genai.chat") + "?reset=1",
-            bot_mode_rag=False,
-            bot_mode_agent=False,
+            bot_mode_rag=True,
+            bot_mode_agent=True,
         )
+
 
 # =========================================================
 # 인지 스크리닝 화면 (/genai/audio)
@@ -688,7 +740,7 @@ def _save_screening_result_row(result: Dict[str, object], summary_text: str) -> 
     if not _is_logged_in():
         return None
     row = ScreeningResult(
-        user_username=g.user.username,
+        user_id=g.user.id,
         total_score=_to_int(result.get("total"), 0),
         max_score=_to_int(result.get("max"), 10),
         result_summary=str(result.get("label", "")),

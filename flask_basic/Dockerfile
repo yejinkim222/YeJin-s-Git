@@ -26,12 +26,13 @@ ENV RAG_CHROMA_DIR=/tmp/chroma
 ENV SQLALCHEMY_DATABASE_URI=sqlite:////tmp/solcare.db
 
 # gunicorn: 애플리케이션 팩토리 사용 (pybo:create_app())
-# 타임아웃/스레드/프록시 헤더 처리
-CMD exec gunicorn 'pybo:create_app()' \
+CMD gunicorn 'pybo:create_app()' \
   --bind ":${PORT}" \
   --workers 2 \
   --threads 8 \
   --timeout 180 \
-  --access-logfile '-' \
-  --error-logfile '-' \
+  --log-level debug \
+  --access-logfile - \
+  --error-logfile - \
   --forwarded-allow-ips='*'
+

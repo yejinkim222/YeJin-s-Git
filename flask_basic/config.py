@@ -64,7 +64,7 @@ RAG_MAX_CHARS = 2800
 
 
 # --- RAG / Chroma 기본값 & ENV 매핑 ---
-RAG_PDF_DIR = os.getenv("RAG_PDF_DIR", "")  # 비워두면 동기화 스킵
+RAG_PDF_DIR = os.getenv("RAG_PDF_DIR", os.path.join(BASE_DIR, "data", "solcare_pdf"))
 RAG_CHROMA_DIR = os.getenv(
     "RAG_CHROMA_DIR",
     os.path.join(BASE_DIR, "data", "rag", "chroma")  # 기본 경로

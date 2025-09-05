@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // === 폼 제출 처리
   form.addEventListener("submit", e => {
-    e.preventDefault();  // ✅ 반드시 제일 위에 와야 함
+    e.preventDefault();
 
     // === 입력 검증
     if (!age.value.trim()) {
@@ -83,7 +83,7 @@ document.addEventListener("DOMContentLoaded", () => {
       period: period.value
     };
 
-    console.log("📨 서버로 보낼 원시 입력값:", formData);
+    console.log("서버로 보낼 원시 입력값:", formData);
 
     // === 입력값을 localStorage에 저장
     Object.entries(formData).forEach(([key, value]) => {

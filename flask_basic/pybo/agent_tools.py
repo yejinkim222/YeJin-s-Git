@@ -40,7 +40,7 @@ def _tool_audio_fetch_latest_result() -> str:
         return "[error] 로그인 사용자가 아닙니다."
     from models import ScreeningResult
     row = (ScreeningResult.query
-           .filter_by(user_username=g.user.username)
+           .filter_by(user_id=g.user.id)
            .order_by(ScreeningResult.created_at.desc())
            .first())
     if not row:

@@ -12,7 +12,7 @@ class InputData(db.Model):
     __tablename__ = 'input_data' # 사용자 입력값 저장 테이블
 
     id = db.Column(db.Integer,  db.Sequence('input_seq', start=1, increment=1), primary_key=True) # 시퀀스 생성
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'),nullable=True)  # 사용자 id 외부 키 사용, 유저 아직 없어서 null 가능하게 둠
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'),nullable=True)  # 사용자 id 외부 키 사용
 
     # 유저 테이블에서 해당 유저의 결과 전체 참조, 이 테이블에서 해당 유저 정보 참조 가능하게 연결
     user = db.relationship('Users', backref=backref('input_datas', lazy=True))
@@ -106,24 +106,21 @@ class Message(db.Model):
 
 
 class ScreeningResult(db.Model):
-    """인지 스크리닝 1회 결과를 한 행에 저장하는 평탄 테이블."""
     __tablename__ = "screening_result"
 
-    # 시퀀스 생성
+
     id = db.Column(db.Integer, db.Sequence('data_seq', start=1, increment=1),primary_key=True)
 
-    # FK: Users.username(문자열) 참조
-    user_username = db.Column(
-        db.String(150),
-        db.ForeignKey("users.username"),
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id"),
         nullable=False,
         index=True,
-        doc="Users.username FK",
+        doc="Users.id FK",
     )
 
-    # 타임스탬프
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
-    finished_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now(), index=True)
+    finished_at = db.Column(db.DateTime, default=datetime.now())
 
     # 집계/요약
     total_score   = db.Column(db.Integer, nullable=False, default=0)
@@ -137,7 +134,6 @@ class ScreeningResult(db.Model):
 
     user = db.relationship(
         Users,
-        primaryjoin="ScreeningResult.user_username == Users.username",
-        backref=backref("screenings_flat", lazy=True),
+        backref=backref("screenings", lazy=True),
         viewonly=False,
     )

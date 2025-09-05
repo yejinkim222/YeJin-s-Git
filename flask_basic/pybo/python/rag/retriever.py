@@ -9,7 +9,8 @@ import numpy as np
 from flask import current_app
 
 try:
-    import faiss                   # faiss-cpu 권장
+    import faiss  # faiss-cpu 권장
+
     _HAS_FAISS = True
 except Exception:
     _HAS_FAISS = False
@@ -17,7 +18,9 @@ except Exception:
 try:
     from sentence_transformers import SentenceTransformer
 except Exception as e:
-    raise RuntimeError("sentence-transformers가 필요합니다: pip install sentence-transformers") from e
+    raise RuntimeError(
+        "sentence-transformers가 필요합니다: pip install sentence-transformers"
+    ) from e
 
 
 def _normalize(a: np.ndarray) -> np.ndarray:
@@ -64,6 +67,7 @@ class _FaissIPIndex(_BaseIndex):
 
 class _NumpyIPIndex(_BaseIndex):
     """FAISS가 없을 때를 위한 아주 단순한 대체."""
+
     def __init__(self, dim: int):
         self.vecs = np.zeros((0, dim), dtype=np.float32)
 
@@ -91,13 +95,16 @@ class RagRetriever:
     텍스트 임베딩 + (FAISS or Numpy) 내적 검색기.
     meta.json에는 각 벡터의 {text, source} 메타데이터가 순서대로 저장됨.
     """
+
     def __init__(self, model_name: str, index_path: str, meta_path: str):
         self.model_name = model_name
         self.index_path = index_path
-        self.meta_path  = meta_path
+        self.meta_path = meta_path
         self.embedder = SentenceTransformer(model_name)
         self.dim = self.embedder.get_sentence_embedding_dimension()
-        self.index: _BaseIndex = (_FaissIPIndex(self.dim) if _HAS_FAISS else _NumpyIPIndex(self.dim))
+        self.index: _BaseIndex = (
+            _FaissIPIndex(self.dim) if _HAS_FAISS else _NumpyIPIndex(self.dim)
+        )
         self.meta: List[Dict] = []
 
         # 로드(있으면)
@@ -139,7 +146,9 @@ class RagRetriever:
         BGE-M3는 쿼리와 문서에 약한 프롬프트 차이가 있지만, 우선 공통 임베딩으로도 충분히 동작.
         필요시 여기서 is_query=True일 때 프롬프트/정규화 로직을 살짝 다르게 해도 됨.
         """
-        embs = self.embedder.encode(texts, batch_size=32, normalize_embeddings=False, convert_to_numpy=True)
+        embs = self.embedder.encode(
+            texts, batch_size=32, normalize_embeddings=False, convert_to_numpy=True
+        )
         return _normalize(embs)
 
     # ---------- 검색 ----------
@@ -151,7 +160,9 @@ class RagRetriever:
             if i < 0 or i >= len(self.meta):
                 continue
             m = self.meta[i]
-            hits.append(Passage(text=m["text"], source=m.get("source", ""), score=float(sc)))
+            hits.append(
+                Passage(text=m["text"], source=m.get("source", ""), score=float(sc))
+            )
         return hits
 
 
@@ -160,7 +171,7 @@ class RagRetriever:
 def get_retriever() -> RagRetriever:
     cfg = current_app.config
     return RagRetriever(
-        model_name = cfg.get("RAG_EMBED_MODEL", "BAAI/bge-m3"),
-        index_path = cfg.get("RAG_INDEX_PATH"),
-        meta_path  = cfg.get("RAG_META_PATH"),
+        model_name=cfg.get("RAG_EMBED_MODEL", "BAAI/bge-m3"),
+        index_path=cfg.get("RAG_INDEX_PATH"),
+        meta_path=cfg.get("RAG_META_PATH"),
     )
