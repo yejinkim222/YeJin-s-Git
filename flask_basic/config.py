@@ -3,7 +3,7 @@ from os import getenv
 
 # 기본 설정
 BASE_DIR = os.path.dirname(__file__)
-SQLALCHEMY_DATABASE_URI = 'sqlite:///{}'.format(os.path.join(BASE_DIR,'solcare.db'))
+SQLALCHEMY_DATABASE_URI = "oracle+cx_oracle://asdf:asdf@localhost:1521/XE"
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 # 암호 아직 제대로 설정된 것 아님
 SECRET_KEY="dev"
